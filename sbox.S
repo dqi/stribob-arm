@@ -1,6 +1,6 @@
 .data
 .balign 4
-test
+test:
 .word 0x00010203
 .word 0x04050607
 .balign 1
@@ -52,7 +52,7 @@ ldrb r3,[r12,r3]
 ldrb r4,[r12,r4]
 
 # For r11
-ldrb r11,[r1,r5]
+ldrb r11,[r12,r5]
 ldrb r6,[r12,r6]
 ldrb r7,[r12,r7]
 ldrb r8,[r12,r8]
@@ -68,4 +68,4 @@ orr r11,r11,r7, lsl #16
 orr r11,r11,r8, lsl #24
 
 # Store to memory
-strd r10,r11,r0!
+strd r10,r11,[r0]!
