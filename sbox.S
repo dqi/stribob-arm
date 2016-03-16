@@ -31,7 +31,7 @@ sbox:
 .globl _start
 
 _start:
-ldr r9,=0x000000ff
+mov r9,0xff
 // Get the base sbox-address
 ldr r12,=sbox
 // test
