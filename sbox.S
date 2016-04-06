@@ -1,5 +1,5 @@
 .data
-.balign 1
+.balign 4
 testvector:
 .byte 0x77, 0x38, 0xE1, 0xB5, 0x41, 0xA0, 0x36, 0xEA
 .byte 0x45, 0x8D, 0x50, 0xF8, 0x0F, 0xA0, 0x1C, 0x44
@@ -9,6 +9,7 @@ testvector:
 .byte 0x72, 0x91, 0x14, 0x59, 0x5F, 0x08, 0x6E, 0x76
 .byte 0x07, 0x18, 0xAF, 0xE3, 0x65, 0xBC, 0x09, 0xDE
 .byte 0xB6, 0xAF, 0xA1, 0x80, 0xBC, 0xEC, 0x2A, 0x98
+step1: .skip 64
 sbox:
 .byte 0x18, 0x23, 0xC6, 0xE8, 0x87, 0xB8, 0x01, 0x4F, 0x36, 0xA6, 0xD2, 0xF5, 0x79, 0x6F, 0x91, 0x52
 .byte 0x60, 0xBC, 0x9B, 0x8E, 0xA3, 0x0C, 0x7B, 0x35, 0x1D, 0xE0, 0xD7, 0xC2, 0x2E, 0x4B, 0xFE, 0x57
@@ -31,365 +32,327 @@ sbox:
 .globl _start
 
 _start:
-mov r9,0xff
 // Get the base sbox-address
 ldr r12,=sbox
 // test
 ldr r0,=testvector
+ldr r14,=step1
 
 // This piece of assembly (function?) does the following:
 // r0 pointer to 64 bytes to be sboxed
-// at the end all the bytes will be sboxed
+// at the end all the bytes will be sboxed in step1
 
 ////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
+// Sbox 13 bytes, in 66 cycles
+// Load 13 bytes to sbox (14 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
+ldr r13, [r0], #4
 
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (13 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
+lsl r13, #2
 
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
+// Do the sbox and store the bytes (3 cycles per byte, 39 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+ldr r13, [r12,r13]
+str r13, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
+// Sbox 13 bytes, in 66 cycles
+// Load 13 bytes to sbox (14 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
+ldr r13, [r0], #4
 
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (13 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
+lsl r13, #2
 
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
+// Do the sbox and store the bytes (3 cycles per byte, 39 total)
+ldr r1, [r12,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+ldr r13, [r12,r13]
+str r13, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
+// Sbox 13 bytes, in 66 cycles
+// Load 13 bytes to sbox (14 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
+ldr r13, [r0], #4
 
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (13 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
+lsl r13, #2
 
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
+// Do the sbox and store the bytes (3 cycles per byte, 39 total)
+ldr r1, [r12,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+ldr r13, [r12,r13]
+str r13, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
+// Sbox 13 bytes, in 66 cycles
+// Load 13 bytes to sbox (14 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
+ldr r13, [r0], #4
 
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (13 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
+lsl r13, #2
 
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
+// Do the sbox and store the bytes (3 cycles per byte, 39 total)
+ldr r1, [r12,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+ldr r13, [r12,r13]
+str r13, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
+// Sbox 12 bytes, in 61 cycles
+// Load 12 bytes to sbox (13 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
 
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (12 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
 
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
+// Do the sbox and store the bytes (3 cycles per byte, 36 total)
+ldr r1, [r12,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
+// That's 4*66 + 61 = 264 + 61 = 325 cycles
 
-////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
 
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
+// Now we shall do some finite field multiplication using bitslice, dark magic
+// up ahead. Be warned ye who tread here.
 
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
+// Lets first get the vector ready to be bitsliced
+// sboxed bytes are at r14-256
+// first we need bytes at offset 0,9,18,27,36,45,54,63 (all *4 offcourse)
+// Lets just bitslice them right away, since we do 32 multiplications at once
+// with one vector we will store each byte 4 times.
 
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
-
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
-
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// This is one block, it sbox-es 8 bytes
-// Get 4 bytes into r10, and 4 into r11
-ldrd r10, r11,[r0]
-
-// Get the bytes out of r10
-and r1,r9,r10
-and r2,r9,r10, asr #8
-and r3,r9,r10, asr #16
-and r4,r9,r10, asr #24
-
-// Also get the bytes from r11
-and r5,r9,r11
-and r6,r9,r11, asr #8
-and r7,r9,r11, asr #16
-and r8,r9,r11, asr #24
-
-// Do sbox-ing
-// For r10
-ldrb r10,[r12,r1]
-ldrb r2,[r12,r2]
-ldrb r3,[r12,r3]
-ldrb r4,[r12,r4]
-
-// For r11
-ldrb r11,[r12,r5]
-ldrb r6,[r12,r6]
-ldrb r7,[r12,r7]
-ldrb r8,[r12,r8]
-
-// Construct r10 from the bytes
-orr r10,r10,r2, lsl #8
-orr r10,r10,r3, lsl #16
-orr r10,r10,r4, lsl #24
-
-// Construct r11 from the bytes
-orr r11,r11,r6, lsl #8
-orr r11,r11,r7, lsl #16
-orr r11,r11,r8, lsl #24
-
-// Store to memory and increase so we can do next block
-strd r10,r11,[r0],#8
-////////////////////////////////////////////////////////////////////////////////
 
