@@ -351,7 +351,7 @@ str r2, [r14], #4
 ldr r3, [r13,r3]
 str r3, [r14], #4
 ldr r4, [r13,r4]
-str r4, [r14], #4
+str r4, [r14]
 ////////////////////////////////////////////////////////////////////////////////
 // Make sure the registers are zeroed
 eor r1,r1,r1
@@ -365,7 +365,7 @@ eor r8,r8,r8
 
 // That should be 326 cycles for one sbox
 // Lets get the 0th byte from r14-256
-ldr r0, [r14, -256]!
+ldr r0, [r14, -252]!
 
 // Let us bitslice this byte into r1-r8
 // #1 bits in r1 starting at #31 are repleaced by #1 bits from r0 starting at
@@ -441,7 +441,7 @@ bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for six more bytes:
 // The columnshift means we need to get byte number 18 here
-ldr r0, [r14, #4]
+ldr r0, [r14, #72]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -475,7 +475,7 @@ bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for five more bytes:
 // The columnshift means we need to get byte number 27 here
-ldr r0, [r14, #72]
+ldr r0, [r14, #108]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -509,7 +509,7 @@ bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for four more bytes:
 // The columnshift means we need to get byte number 36 here
-ldr r0, [r14, #4]
+ldr r0, [r14, #144]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -543,7 +543,7 @@ bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for three more bytes:
 // The columnshift means we need to get byte number 45 here
-ldr r0, [r14, #4]
+ldr r0, [r14, #180]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -577,7 +577,7 @@ bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for two more bytes:
 // The columnshift means we need to get byte number 54 here
-ldr r0, [r14, #4]
+ldr r0, [r14, #216]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -612,7 +612,7 @@ asr r8, #4
 
 // For the last byte the asr shift is only 3
 // The columnshift means we need to get byte number 63 here
-ldr r0, [r14, #4]
+ldr r0, [r14, #252]
 
 bfi r1,r0,#31,#1
 asr r1, #3
