@@ -29,7 +29,10 @@ sbox:
 .byte 0x16, 0x3A, 0x69, 0x09, 0x70, 0xB6, 0xD0, 0xED, 0xCC, 0x42, 0x98, 0xA4, 0x28, 0x5C, 0xF8, 0x86
 
 .text
-.globl _start
+    .thumb_func
+    .code   16
+    .syntax unified
+    .globl _start
 
 _start:
 // Get the base sbox-address
@@ -43,8 +46,8 @@ ldr r14,=step1
 // at the end all the bytes will be sboxed in step1
 
 ////////////////////////////////////////////////////////////////////////////////
-// Sbox 13 bytes, in 66 cycles
-// Load 13 bytes to sbox (14 cycles)
+// Sbox 12 bytes, in 61 cycles
+// Load 12 bytes to sbox (13 cycles)
 ldr r1, [r0], #4
 ldr r2, [r0], #4
 ldr r3, [r0], #4
@@ -57,10 +60,9 @@ ldr r9, [r0], #4
 ldr r10, [r0], #4
 ldr r11, [r0], #4
 ldr r12, [r0], #4
-ldr r13, [r0], #4
 
 // Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (13 cycles)
+// cycles. (Instead we can use word-align) (12 cycles)
 lsl r1, #2
 lsl r2, #2
 lsl r3, #2
@@ -73,9 +75,8 @@ lsl r9, #2
 lsl r10, #2
 lsl r11, #2
 lsl r12, #2
-lsl r13, #2
 
-// Do the sbox and store the bytes (3 cycles per byte, 39 total)
+// Do the sbox and store the bytes (3 cycles per byte, 36 total)
 ldr r1, [r13,r1]
 str r1, [r14], #4
 ldr r2, [r12,r2]
@@ -100,191 +101,6 @@ ldr r11, [r12,r11]
 str r11, [r14], #4
 ldr r12, [r12,r12]
 str r12, [r14], #4
-ldr r13, [r12,r13]
-str r13, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 13 bytes, in 66 cycles
-// Load 13 bytes to sbox (14 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-ldr r13, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (13 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-lsl r13, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 39 total)
-ldr r1, [r12,r1]
-str r1, [r14], #4
-ldr r2, [r12,r2]
-str r2, [r14], #4
-ldr r3, [r12,r3]
-str r3, [r14], #4
-ldr r4, [r12,r4]
-str r4, [r14], #4
-ldr r5, [r12,r5]
-str r5, [r14], #4
-ldr r6, [r12,r6]
-str r6, [r14], #4
-ldr r7, [r12,r7]
-str r7, [r14], #4
-ldr r8, [r12,r8]
-str r8, [r14], #4
-ldr r9, [r12,r9]
-str r9, [r14], #4
-ldr r10, [r12,r10]
-str r10, [r14], #4
-ldr r11, [r12,r11]
-str r11, [r14], #4
-ldr r12, [r12,r12]
-str r12, [r14], #4
-ldr r13, [r12,r13]
-str r13, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 13 bytes, in 66 cycles
-// Load 13 bytes to sbox (14 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-ldr r13, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (13 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-lsl r13, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 39 total)
-ldr r1, [r12,r1]
-str r1, [r14], #4
-ldr r2, [r12,r2]
-str r2, [r14], #4
-ldr r3, [r12,r3]
-str r3, [r14], #4
-ldr r4, [r12,r4]
-str r4, [r14], #4
-ldr r5, [r12,r5]
-str r5, [r14], #4
-ldr r6, [r12,r6]
-str r6, [r14], #4
-ldr r7, [r12,r7]
-str r7, [r14], #4
-ldr r8, [r12,r8]
-str r8, [r14], #4
-ldr r9, [r12,r9]
-str r9, [r14], #4
-ldr r10, [r12,r10]
-str r10, [r14], #4
-ldr r11, [r12,r11]
-str r11, [r14], #4
-ldr r12, [r12,r12]
-str r12, [r14], #4
-ldr r13, [r12,r13]
-str r13, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 13 bytes, in 66 cycles
-// Load 13 bytes to sbox (14 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-ldr r13, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (13 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-lsl r13, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 39 total)
-ldr r1, [r12,r1]
-str r1, [r14], #4
-ldr r2, [r12,r2]
-str r2, [r14], #4
-ldr r3, [r12,r3]
-str r3, [r14], #4
-ldr r4, [r12,r4]
-str r4, [r14], #4
-ldr r5, [r12,r5]
-str r5, [r14], #4
-ldr r6, [r12,r6]
-str r6, [r14], #4
-ldr r7, [r12,r7]
-str r7, [r14], #4
-ldr r8, [r12,r8]
-str r8, [r14], #4
-ldr r9, [r12,r9]
-str r9, [r14], #4
-ldr r10, [r12,r10]
-str r10, [r14], #4
-ldr r11, [r12,r11]
-str r11, [r14], #4
-ldr r12, [r12,r12]
-str r12, [r14], #4
-ldr r13, [r12,r13]
-str r13, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 // Sbox 12 bytes, in 61 cycles
@@ -318,7 +134,7 @@ lsl r11, #2
 lsl r12, #2
 
 // Do the sbox and store the bytes (3 cycles per byte, 36 total)
-ldr r1, [r12,r1]
+ldr r1, [r13,r1]
 str r1, [r14], #4
 ldr r2, [r12,r2]
 str r2, [r14], #4
@@ -343,16 +159,200 @@ str r11, [r14], #4
 ldr r12, [r12,r12]
 str r12, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
-// That's 4*66 + 61 = 264 + 61 = 325 cycles
+////////////////////////////////////////////////////////////////////////////////
+// Sbox 12 bytes, in 61 cycles
+// Load 12 bytes to sbox (13 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
 
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (12 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
 
-// Now we shall do some finite field multiplication using bitslice, dark magic
-// up ahead. Be warned ye who tread here.
+// Do the sbox and store the bytes (3 cycles per byte, 36 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Sbox 12 bytes, in 61 cycles
+// Load 12 bytes to sbox (13 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
 
-// Lets first get the vector ready to be bitsliced
-// sboxed bytes are at r14-256
-// first we need bytes at offset 0,9,18,27,36,45,54,63 (all *4 offcourse)
-// Lets just bitslice them right away, since we do 32 multiplications at once
-// with one vector we will store each byte 4 times.
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (12 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
 
+// Do the sbox and store the bytes (3 cycles per byte, 36 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Sbox 12 bytes, in 61 cycles
+// Load 12 bytes to sbox (13 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
 
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (12 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
+
+// Do the sbox and store the bytes (3 cycles per byte, 36 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r4, [r14], #4
+ldr r5, [r12,r5]
+str r5, [r14], #4
+ldr r6, [r12,r6]
+str r6, [r14], #4
+ldr r7, [r12,r7]
+str r7, [r14], #4
+ldr r8, [r12,r8]
+str r8, [r14], #4
+ldr r9, [r12,r9]
+str r9, [r14], #4
+ldr r10, [r12,r10]
+str r10, [r14], #4
+ldr r11, [r12,r11]
+str r11, [r14], #4
+ldr r12, [r12,r12]
+str r12, [r14], #4
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Sbox 4 bytes, in 21 cycles
+// Load 12 bytes to sbox (5 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (4 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+
+// Do the sbox and store the bytes (3 cycles per byte, 12 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r12,r2]
+str r2, [r14], #4
+ldr r3, [r12,r3]
+str r3, [r14], #4
+ldr r4, [r12,r4]
+str r12, [r14], #4
+////////////////////////////////////////////////////////////////////////////////
+// So that's 326 cycles
