@@ -353,6 +353,298 @@ str r3, [r14], #4
 ldr r4, [r13,r4]
 str r4, [r14], #4
 ////////////////////////////////////////////////////////////////////////////////
-// That's 326 cycles for one sbox
+// Make sure the registers are zeroed
+eor r1,r1,r1
+eor r2,r2,r2
+eor r3,r3,r3
+eor r4,r4,r4
+eor r5,r5,r5
+eor r6,r6,r6
+eor r7,r7,r7
+eor r8,r8,r8
+
+// That should be 326 cycles for one sbox
+// Lets get the 0th byte from r14-256
+ldr r0, [r14, -256]!
+
+// Let us bitslice this byte into r1-r8
+// #1 bits in r1 starting at #31 are repleaced by #1 bits from r0 starting at
+// bit[0]
+// Using ASR in a smart way can probably save a few cycles, just mind the last
+// one.
+bfi r1,r0,#31,#1
+asr r1, #4 // Copy the bit 4 times
+lsr r0, #1 // Throw out the least significant bit we just bitsliced
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+// now the 30-27 bit of r1-r8 contains the first byte bitsliced (so we have it 4
+// times, and we will need this 4 times for the multiplication)
+
+// Do this for seven more bytes:
+// The columnshift means we need to get byte number 9 here
+ldr r0, [r14, #36]
+
+bfi r1,r0,#31,#1
+asr r1, #4
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+// Do this for six more bytes:
+// The columnshift means we need to get byte number 18 here
+ldr r0, [r14, #4]
+
+bfi r1,r0,#31,#1
+asr r1, #4
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+// Do this for five more bytes:
+// The columnshift means we need to get byte number 27 here
+ldr r0, [r14, #72]
+
+bfi r1,r0,#31,#1
+asr r1, #4
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+// Do this for four more bytes:
+// The columnshift means we need to get byte number 36 here
+ldr r0, [r14, #4]
+
+bfi r1,r0,#31,#1
+asr r1, #4
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+// Do this for three more bytes:
+// The columnshift means we need to get byte number 45 here
+ldr r0, [r14, #4]
+
+bfi r1,r0,#31,#1
+asr r1, #4
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+// Do this for two more bytes:
+// The columnshift means we need to get byte number 54 here
+ldr r0, [r14, #4]
+
+bfi r1,r0,#31,#1
+asr r1, #4
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #4
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #4
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #4
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #4
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #4
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #4
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #4
+
+// For the last byte the asr shift is only 3
+// The columnshift means we need to get byte number 63 here
+ldr r0, [r14, #4]
+
+bfi r1,r0,#31,#1
+asr r1, #3
+lsr r0, #1
+
+bfi r2,r0,#31,#1
+asr r2, #3
+lsr r0, #1
+
+bfi r3,r0,#31,#1
+asr r3, #3
+lsr r0, #1
+
+bfi r4,r0,#31,#1
+asr r4, #3
+lsr r0, #1
+
+bfi r5,r0,#31,#1
+asr r5, #3
+lsr r0, #1
+
+bfi r6,r0,#31,#1
+asr r6, #3
+lsr r0, #1
+
+bfi r7,r0,#31,#1
+asr r7, #3
+lsr r0, #1
+
+bfi r8,r0,#31,#1
+asr r8, #3
+// One vector bitsliced into r1-r8, next up bitslicing the matrix into
+// r9,10,11,12
 nop
 nop
