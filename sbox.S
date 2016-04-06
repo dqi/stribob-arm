@@ -27,6 +27,11 @@ sbox:
 .word 0x3C, 0x81, 0x94, 0xF7, 0xB9, 0x13, 0x2C, 0xD3, 0xE7, 0x6E, 0xC4, 0x03, 0x56, 0x44, 0x7F, 0xA9
 .word 0x2A, 0xBB, 0xC1, 0x53, 0xDC, 0x0B, 0x9D, 0x6C, 0x31, 0x74, 0xF6, 0x46, 0xAC, 0x89, 0x14, 0xE1
 .word 0x16, 0x3A, 0x69, 0x09, 0x70, 0xB6, 0xD0, 0xED, 0xCC, 0x42, 0x98, 0xA4, 0x28, 0x5C, 0xF8, 0x86
+mdsmatrix_1:
+.word 0xa5a5b7ed
+.word 0x124800
+.word 0x49248012
+.word 0x12492480
 
 .text
     .syntax unified
@@ -353,18 +358,8 @@ str r3, [r14], #4
 ldr r4, [r13,r4]
 str r4, [r14]
 ////////////////////////////////////////////////////////////////////////////////
-// Make sure the registers are zeroed
-eor r1,r1,r1
-eor r2,r2,r2
-eor r3,r3,r3
-eor r4,r4,r4
-eor r5,r5,r5
-eor r6,r6,r6
-eor r7,r7,r7
-eor r8,r8,r8
-
 // That should be 326 cycles for one sbox
-// Lets get the 0th byte from r14-256
+// Lets get the 0th byte from r14-252
 ldr r0, [r14, -252]!
 
 // Let us bitslice this byte into r1-r8
@@ -645,6 +640,19 @@ lsr r0, #1
 bfi r8,r0,#31,#1
 asr r8, #3
 // One vector bitsliced into r1-r8, next up bitslicing the matrix into
-// r9,10,11,12
-nop
-nop
+// r9,10,11,12, they use low weight matrix so it fits in four registers :),
+// be sure to take bytes per row (so first four bytes are from the first row)
+
+// first row is 01 01 04 01... actually these are constants which we can load
+// from somewhere
+ldr r0,=mdsmatrix_1
+ldr r9,[r0]
+ldr r10, [r0,#4]
+ldr r11, [r0,#8]
+ldr r12, [r0,#12]
+
+// Time for some finite field multiplication
+// r14: points to sboxed bytes
+// r0: points to mdsmatrix
+// r13: pointer to base of sbox
+// r1-12 bitsliced polynomials
