@@ -50,7 +50,7 @@ polynomials:
 .word 0
 .word 0
 .word 0
-// Same for another 32 polynomials
+// Same for another 32 10th-degree polynomials
 polynomials2:
 .word 0
 .word 0
@@ -688,121 +688,123 @@ ldr r12, [r0,#12]
 // r13: pointer to base of sbox
 // r1-12 bitsliced polynomials
 
-// Use r14 as the storagepointer
-ldr r14,=polynomials
+// Use r13 as the storagepointer
+ldr r13,=polynomials
 
 // We will need the 8th,9th and 10th degree first
 
 // 10th degree
 and r0,r8,r12
-str r0,[r14,#40]
+str r0,[r13,#40]
 
 // 9th degree
 and r0,r8,r11
-and r13,r7,r12
-eor r0,r0,r13
-str r0,[r14,#36]
+and r14,r7,r12
+eor r0,r0,r14
+str r0,[r13,#36]
 
 // 8th degree
 and r0,r8,r10
-and r13,r7,r11
-eor r0,r0,r13
-and r13,r6,r12
-eor r0,r0,r13
-str r0,[r14,#32]
+and r14,r7,r11
+eor r0,r0,r14
+and r14,r6,r12
+eor r0,r0,r14
+str r0,[r13,#32]
 
 // Now we can calculate the 0th-7th degrees
 
 // 0th degree, because 8th degree is still in r0 we do not load it this time
-and r13,r1,r9
-eor r0,r0,r13
-str r0,[r14]
+and r14,r1,r9
+eor r0,r0,r14
+str r0,[r13]
 
 // 1st degree
-ldr r0,[r14,#36]
-and r13,r1,r10
-eor r0,r0,r13
-and r13,r2,r9
-eor r0,r0,r13
-str r0,[r14,#4]
+ldr r0,[r13,#36]
+and r14,r1,r10
+eor r0,r0,r14
+and r14,r2,r9
+eor r0,r0,r14
+str r0,[r13,#4]
 
 // 2nd degree
-ldr r0,[r14,#32]
-ldr r13,[r14,#40]
-eor r0,r0,r13
-and r13,r1,r11
-eor r0,r0,r13
-and r13,r2,r10
-eor r0,r0,r13
-and r13,r3,r9
-eor r0,r0,r13
-str r0,[r14,#8]
+ldr r0,[r13,#32]
+ldr r14,[r13,#40]
+eor r0,r0,r14
+and r14,r1,r11
+eor r0,r0,r14
+and r14,r2,r10
+eor r0,r0,r14
+and r14,r3,r9
+eor r0,r0,r14
+str r0,[r13,#8]
 
 // 3th degree
-ldr r0,[r14,#32]
-ldr r13,[r14,#36]
-eor r0,r0,r13
-and r13,r1,r12
-eor r0,r0,r13
-and r13,r2,r11
-eor r0,r0,r13
-and r13,r3,r10
-eor r0,r0,r13
-str r0,[r14,#12]
+ldr r0,[r13,#32]
+ldr r14,[r13,#36]
+eor r0,r0,r14
+and r14,r1,r12
+eor r0,r0,r14
+and r14,r2,r11
+eor r0,r0,r14
+and r14,r3,r10
+eor r0,r0,r14
+str r0,[r13,#12]
 
 // 4th degree
-ldr r0,[r14,#32]
-ldr r13,[r14,#36]
-eor r0,r0,r13
-ldr r13,[r14,#40]
-eor r0,r0,r13
-and r13,r2,r12
-eor r0,r0,r13
-and r13,r3,r11
-eor r0,r0,r13
-and r13,r4,r10
-eor r0,r0,r13
-and r13,r5,r9
-eor r0,r0,r13
-str r0,[r14,#16]
+ldr r0,[r13,#32]
+ldr r13,[r13,#36]
+eor r0,r0,r14
+ldr r13,[r13,#40]
+eor r0,r0,r14
+and r14,r2,r12
+eor r0,r0,r14
+and r14,r3,r11
+eor r0,r0,r14
+and r14,r4,r10
+eor r0,r0,r14
+and r14,r5,r9
+eor r0,r0,r14
+str r0,[r13,#16]
 
 // 5th degree
-ldr r0,[r14,#40]
-ldr r13,[r14,#36]
-eor r0,r0,r13
-and r13,r3,r12
-eor r0,r0,r13
-and r13,r4,r11
-eor r0,r0,r13
-and r13,r5,r10
-eor r0,r0,r13
-and r13,r6,r9
-eor r0,r0,r13
-str r0,[r14,#20]
+ldr r0,[r13,#40]
+ldr r13,[r13,#36]
+eor r0,r0,r14
+and r14,r3,r12
+eor r0,r0,r14
+and r14,r4,r11
+eor r0,r0,r14
+and r14,r5,r10
+eor r0,r0,r14
+and r14,r6,r9
+eor r0,r0,r14
+str r0,[r13,#20]
 
 // 6th degree
-ldr r0,[r14,#40]
-and r13,r4,r12
-eor r0,r0,r13
-and r13,r5,r11
-eor r0,r0,r13
-and r13,r6,r10
-eor r0,r0,r13
-and r13,r7,r9
-eor r0,r0,r13
-str r0,[r14,#24]
+ldr r0,[r13,#40]
+and r14,r4,r12
+eor r0,r0,r14
+and r14,r5,r11
+eor r0,r0,r14
+and r14,r6,r10
+eor r0,r0,r14
+and r14,r7,r9
+eor r0,r0,r14
+str r0,[r13,#24]
 
 // 7th degree
 and r0,r5,r12
-and r13,r6,r11
-eor r0,r0,r13
-and r13,r7,r10
-eor r0,r0,r13
-and r13,r8,r9
-eor r0,r0,r13
-str r0,[r14,#28]
+and r14,r6,r11
+eor r0,r0,r14
+and r14,r7,r10
+eor r0,r0,r14
+and r14,r8,r9
+eor r0,r0,r14
+str r0,[r13,#28]
 
 // Now we have 32 the polynomials multiplied and stored, lets do another 32.
+// Use r13 as the storagepointer
+ldr r13,=polynomials2
 // Load magic matrix constants for the other half
 ldr r0,=mdsmatrix_2
 ldr r9,[r0]
@@ -810,128 +812,130 @@ ldr r10, [r0,#4]
 ldr r11, [r0,#8]
 ldr r12, [r0,#12]
 
-// Same calculations as before but store somewhere else
-
-ldr r14,=polynomials2
+// We will need the 8th,9th and 10th degree first
 // 10th degree
 and r0,r8,r12
-str r0,[r14,#40]
+str r0,[r13,#40]
 
 // 9th degree
 and r0,r8,r11
-and r13,r7,r12
-eor r0,r0,r13
-str r0,[r14,#36]
+and r14,r7,r12
+eor r0,r0,r14
+str r0,[r13,#36]
 
 // 8th degree
 and r0,r8,r10
-and r13,r7,r11
-eor r0,r0,r13
-and r13,r6,r12
-eor r0,r0,r13
-str r0,[r14,#32]
+and r14,r7,r11
+eor r0,r0,r14
+and r14,r6,r12
+eor r0,r0,r14
+str r0,[r13,#32]
+
+// Now we can calculate the 0th-7th degrees
 
 // 0th degree, because 8th degree is still in r0 we do not load it this time
-and r13,r1,r9
-eor r0,r0,r13
-str r0,[r14]
+and r14,r1,r9
+eor r0,r0,r14
+str r0,[r13]
 
 // 1st degree
-ldr r0,[r14,#36]
-and r13,r1,r10
-eor r0,r0,r13
-and r13,r2,r9
-eor r0,r0,r13
-str r0,[r14,#4]
+ldr r0,[r13,#36]
+and r14,r1,r10
+eor r0,r0,r14
+and r14,r2,r9
+eor r0,r0,r14
+str r0,[r13,#4]
 
 // 2nd degree
-ldr r0,[r14,#32]
-ldr r13,[r14,#40]
-eor r0,r0,r13
-and r13,r1,r11
-eor r0,r0,r13
-and r13,r2,r10
-eor r0,r0,r13
-and r13,r3,r9
-eor r0,r0,r13
-str r0,[r14,#8]
+ldr r0,[r13,#32]
+ldr r14,[r13,#40]
+eor r0,r0,r14
+and r14,r1,r11
+eor r0,r0,r14
+and r14,r2,r10
+eor r0,r0,r14
+and r14,r3,r9
+eor r0,r0,r14
+str r0,[r13,#8]
 
 // 3th degree
-ldr r0,[r14,#32]
-ldr r13,[r14,#36]
-eor r0,r0,r13
-and r13,r1,r12
-eor r0,r0,r13
-and r13,r2,r11
-eor r0,r0,r13
-and r13,r3,r10
-eor r0,r0,r13
-str r0,[r14,#12]
+ldr r0,[r13,#32]
+ldr r14,[r13,#36]
+eor r0,r0,r14
+and r14,r1,r12
+eor r0,r0,r14
+and r14,r2,r11
+eor r0,r0,r14
+and r14,r3,r10
+eor r0,r0,r14
+str r0,[r13,#12]
 
 // 4th degree
-ldr r0,[r14,#32]
-ldr r13,[r14,#36]
-eor r0,r0,r13
-ldr r13,[r14,#40]
-eor r0,r0,r13
-and r13,r2,r12
-eor r0,r0,r13
-and r13,r3,r11
-eor r0,r0,r13
-and r13,r4,r10
-eor r0,r0,r13
-and r13,r5,r9
-eor r0,r0,r13
-str r0,[r14,#16]
+ldr r0,[r13,#32]
+ldr r13,[r13,#36]
+eor r0,r0,r14
+ldr r13,[r13,#40]
+eor r0,r0,r14
+and r14,r2,r12
+eor r0,r0,r14
+and r14,r3,r11
+eor r0,r0,r14
+and r14,r4,r10
+eor r0,r0,r14
+and r14,r5,r9
+eor r0,r0,r14
+str r0,[r13,#16]
 
 // 5th degree
-ldr r0,[r14,#40]
-ldr r13,[r14,#36]
-eor r0,r0,r13
-and r13,r3,r12
-eor r0,r0,r13
-and r13,r4,r11
-eor r0,r0,r13
-and r13,r5,r10
-eor r0,r0,r13
-and r13,r6,r9
-eor r0,r0,r13
-str r0,[r14,#20]
+ldr r0,[r13,#40]
+ldr r13,[r13,#36]
+eor r0,r0,r14
+and r14,r3,r12
+eor r0,r0,r14
+and r14,r4,r11
+eor r0,r0,r14
+and r14,r5,r10
+eor r0,r0,r14
+and r14,r6,r9
+eor r0,r0,r14
+str r0,[r13,#20]
 
 // 6th degree
-ldr r0,[r14,#40]
-and r13,r4,r12
-eor r0,r0,r13
-and r13,r5,r11
-eor r0,r0,r13
-and r13,r6,r10
-eor r0,r0,r13
-and r13,r7,r9
-eor r0,r0,r13
-str r0,[r14,#24]
+ldr r0,[r13,#40]
+and r14,r4,r12
+eor r0,r0,r14
+and r14,r5,r11
+eor r0,r0,r14
+and r14,r6,r10
+eor r0,r0,r14
+and r14,r7,r9
+eor r0,r0,r14
+str r0,[r13,#24]
 
 // 7th degree
 and r0,r5,r12
-and r13,r6,r11
-eor r0,r0,r13
-and r13,r7,r10
-eor r0,r0,r13
-and r13,r8,r9
-eor r0,r0,r13
-str r0,[r14,#28]
+and r14,r6,r11
+eor r0,r0,r14
+and r14,r7,r10
+eor r0,r0,r14
+and r14,r8,r9
+eor r0,r0,r14
+str r0,[r13,#28]
+
 
 // Now we need to unbitslice these 64 polynomials into bytes, xor the right 8 bytes
 // together (= adding in the finite field)... and that's it?
 
 // Load the multiplication result in the registers
-ldr r1,[r14]
-ldr r2,[r14,#4]
-ldr r3,[r14,#8]
-ldr r4,[r14,#12]
-ldr r5,[r14,#16]
-ldr r6,[r14,#20]
-ldr r7,[r14,#24]
-ldr r8,[r14,#28]
+ldr r13,=polynomials
+ldr r1,[r13]
+ldr r2,[r13,#4]
+ldr r3,[r13,#8]
+ldr r4,[r13,#12]
+ldr r5,[r13,#16]
+ldr r6,[r13,#20]
+ldr r7,[r13,#24]
+ldr r8,[r13,#28]
 // We shall store these 64 bytes at r9 = unbitslicestore
 ldr r9,=unbitslicestore
 // Make sure r0[31:8 is empty]
@@ -1583,16 +1587,16 @@ str r0,[r9],#4
 
 // Now the other 32 bytes:
 
-ldr r14,=polynomials2
+ldr r13,=polynomials2
 // Load the multiplication result in the registers
-ldr r1,[r14]
-ldr r2,[r14,#4]
-ldr r3,[r14,#8]
-ldr r4,[r14,#12]
-ldr r5,[r14,#16]
-ldr r6,[r14,#20]
-ldr r7,[r14,#24]
-ldr r8,[r14,#28]
+ldr r1,[r13]
+ldr r2,[r13,#4]
+ldr r3,[r13,#8]
+ldr r4,[r13,#12]
+ldr r5,[r13,#16]
+ldr r6,[r13,#20]
+ldr r7,[r13,#24]
+ldr r8,[r13,#28]
 
 // make sure r0[31:8] is 0
 eor r0,r0,r0
@@ -2258,3 +2262,5 @@ eor r0,r0,r6
 eor r0,r0,r7
 
 // r0 should contain 0x02
+nop
+
