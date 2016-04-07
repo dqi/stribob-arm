@@ -25,19 +25,6 @@
 
 .macro unbitslice
 ////////////////////////////////////////////////////////////////////////////////
-// Load the multiplication result in the registers
-ldr r1,[r13]
-ldr r2,[r13,#4]
-ldr r3,[r13,#8]
-ldr r4,[r13,#12]
-ldr r5,[r13,#16]
-ldr r6,[r13,#20]
-ldr r7,[r13,#24]
-ldr r8,[r13,#28]
-
-// Make sure r0[31:8 is empty]
-eor r0,r0,r0
-
 // Unslice one byte
 bfi r0,r1,#0,#1
 bfi r0,r2,#1,#1
@@ -313,21 +300,19 @@ asr r8, #3
 
 .macro loadmds1
 ////////////////////////////////////////////////////////////////////////////////
-add r0,r13,#256
-ldr r9,[r0]
-ldr r10, [r0,#4]
-ldr r11, [r0,#8]
-ldr r12, [r0,#12]
+ldr r9,[r13]
+ldr r10, [r13,#4]
+ldr r11, [r13,#8]
+ldr r12, [r13,#12]
 ////////////////////////////////////////////////////////////////////////////////
 .endm
 
 .macro loadmds2
 ////////////////////////////////////////////////////////////////////////////////
-add r0,r13,#-16
-ldr r9,[r0]
-ldr r10, [r0,#4]
-ldr r11, [r0,#8]
-ldr r12, [r0,#12]
+ldr r9,[r13]
+ldr r10, [r13,#4]
+ldr r11, [r13,#8]
+ldr r12, [r13,#12]
 ////////////////////////////////////////////////////////////////////////////////
 .endm
 
@@ -361,15 +346,15 @@ sbox:
 .word 0x2A, 0xBB, 0xC1, 0x53, 0xDC, 0x0B, 0x9D, 0x6C, 0x31, 0x74, 0xF6, 0x46, 0xAC, 0x89, 0x14, 0xE1
 .word 0x16, 0x3A, 0x69, 0x09, 0x70, 0xB6, 0xD0, 0xED, 0xCC, 0x42, 0x98, 0xA4, 0x28, 0x5C, 0xF8, 0x86
 mdsmatrix_1:
-.word 0xa5a5b7ed
-.word 0x124800
-.word 0x49248012
-.word 0x12492480
+.word 0x5a5ade7b
+.word 0x842100
+.word 0x29421084
+.word 0x84294210
 mdsmatrix_2:
-.word 0
-.word 0
-.word 0
-.word 0
+.word 0xde7b5a5a
+.word 0x21000084
+.word 0x10842942
+.word 0x42108429
 // Here we will store the bitsliced polynomial results from the matrix
 // multiplication. Offset 0 = x^0, offset 40 = x^10
 polynomials:
@@ -438,8 +423,9 @@ bitslice3 60
 // Lets get the 0th byte from r14-252
 .ltorg
 // r13 points at the sbox now
-loadmds1
+add r13,r13,#1024
 // r13 points at mds1 now
+loadmds1
 add r13,r13,#32
 // r13 points at polynomials1 now
 bitslicedmult
@@ -452,7 +438,19 @@ bitslicedmult
 add r13,r13,#-40
 // r13 points at polynomials1 now
 add r9,r13,#80
+// Make sure r0[31:8 is empty]
+eor r0,r0,r0
+// Load the multiplication result in the registers
+ldr r1,[r13]
+ldr r2,[r13,#4]
+ldr r3,[r13,#8]
+ldr r4,[r13,#12]
+ldr r5,[r13,#16]
+ldr r6,[r13,#20]
+ldr r7,[r13,#24]
+ldr r8,[r13,#28]
 // We shall store these 64 bytes at r9 = unbitslicestore
+unbitslice
 unbitslice
 unbitslice
 unbitslice
@@ -519,7 +517,6 @@ unbitslice
 unbitslice
 unbitslice
 unbitslice
-
 // Get bytes 0,4,8,...28:
 add r9,r9,#-256
 ldr r1, [r9]
@@ -542,4 +539,3 @@ eor r0,r0,r7
 
 // r0 should contain 0x02
 nop
-
