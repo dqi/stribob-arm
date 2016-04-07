@@ -1,18 +1,24 @@
 // Macro's
 
+// sboxall: combine sbox12 and sbox4 to do a whole sbox
+
 // sbox12: when inserted r13 points at sbox, r14 at storage for the result of the
 // sbox and r0 at the input data. in and output are words. sbox8 uses r0-r12 for
 // variables
-
 
 // sbox4: when inserted r13 points at sbox, r14 at storage for the result of the
 // sbox and r0 at the input data. in and output are words. sbox4 uses r0-r4 for
 // variables
 
-// bitslice4: when inserted r14 points at the base of sboxed bytes, it will
-// bitslice the lsb of the byte at r14+arg0 into r1-r8 and asr #4 to copy it 4 times, it
+// bitslice: combine bitslice 4&3 to bitslice a vector, the 8 arguments should be such
+// that the shiftcolumns is done (please remember: it shifts down not up)
+
+// bitslice4,3: when inserted r14 points at the base of sboxed bytes, it will
+// bitslice the lsb of the byte at r14+arg0 into r1-r8 and asr #4 to copy it 4,3 times, it
 // will also throw out the lsb in r0 so this can be inserted in succesion to
 // bitslice the full byte
+
+// loadmultresult: loads r1-r8 with bitsliced polynomials
 
 // bitslicedmult: when inserted r13 points to an area of memory where we can
 // store 10 polynomials, there should be bitsliced poynomials in r1-r12, with
@@ -23,6 +29,317 @@
 // unbitslice 8 polynomials stored there into r0 and store the byte at r9. uses
 // r1-r8 for unbitslicing
 
+// getbyte0-7: gets the 8 bytes from the i'th column from the multiplyresult, xors
+// them together and stores them at r10 and then increases r10.
+
+// getbytes: call getbyte0-7 in order to store the 8 bytes we have ready after two
+// matrix multiplications
+
+.macro onevector arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, r10offset
+// Bitslice the bytes
+// Bitslice byte 0
+// r13 points to the base of the sboxed bytes, same each round
+bitslice \arg0, \arg1, \arg2, \arg3, \arg4, \arg5, \arg6, \arg7
+// Lets get the 0th byte from r14-252
+add r13,r13,#1280
+// r13 points at mds1 now
+loadmds1
+add r13,r13,#32
+// r13 points at polynomials1 now
+bitslicedmult
+add r13,r13,#-16
+// r13 points at mds2 now
+loadmds2
+add r13,r13,#56
+// r13 points at polynomials2 now
+bitslicedmult
+add r13,r13,#-40
+// r13 points at polynomials1 now
+add r9,r13,#80
+// Make sure r0[31:8 is empty]
+eor r0,r0,r0
+// We shall store these 64 bytes at r9 = unbitslicestore
+loadmultresult
+unbitslice32times
+// 32 Bytes unbitsliced, now the r2 stored at polynomials2
+add r13,r13,#40
+// r13 points to polynomials2
+loadmultresult
+unbitslice32times
+add r9,r9,#-256
+add r10,r9,#\r10offset
+// r9 points to unbitslicestore
+// r10 points to testvector, so we can store the round,
+// this will be a different number each round
+getbytes
+// 8 bytes done
+// get r13 ready for another vector
+add r13,r13,#-1352
+// ----
+.endm
+
+.macro sboxall
+sbox12
+sbox12
+sbox12
+sbox12
+sbox12
+sbox4
+.endm
+
+.macro bitslice arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7
+bitslice4 \arg0
+bitslice4 \arg1
+bitslice4 \arg2
+bitslice4 \arg3
+bitslice4 \arg4
+bitslice4 \arg5
+bitslice4 \arg6
+bitslice3 \arg7
+.endm
+
+.macro loadmultresult
+// Load the multiplication result in the registers
+ldr r1,[r13]
+ldr r2,[r13,#4]
+ldr r3,[r13,#8]
+ldr r4,[r13,#12]
+ldr r5,[r13,#16]
+ldr r6,[r13,#20]
+ldr r7,[r13,#24]
+ldr r8,[r13,#28]
+.endm
+
+.macro getbytes
+getbyte0
+getbyte1
+getbyte2
+getbyte3
+getbyte4
+getbyte5
+getbyte6
+getbyte7
+.endm
+
+.macro getbyte7
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#140]
+ldr r1, [r9,#156]
+ldr r2, [r9,#172]
+ldr r3, [r9,#188]
+ldr r4, [r9,#204]
+ldr r5, [r9,#220]
+ldr r6, [r9,#236]
+ldr r7, [r9,#252]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro getbyte6
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#136]
+ldr r1, [r9,#152]
+ldr r2, [r9,#168]
+ldr r3, [r9,#184]
+ldr r4, [r9,#200]
+ldr r5, [r9,#216]
+ldr r6, [r9,#232]
+ldr r7, [r9,#248]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro getbyte5
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#132]
+ldr r1, [r9,#148]
+ldr r2, [r9,#164]
+ldr r3, [r9,#180]
+ldr r4, [r9,#196]
+ldr r5, [r9,#212]
+ldr r6, [r9,#228]
+ldr r7, [r9,#244]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro getbyte4
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#128]
+ldr r1, [r9,#144]
+ldr r2, [r9,#160]
+ldr r3, [r9,#176]
+ldr r4, [r9,#192]
+ldr r5, [r9,#208]
+ldr r6, [r9,#224]
+ldr r7, [r9,#240]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro getbyte3
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#12]
+ldr r1, [r9,#28]
+ldr r2, [r9,#44]
+ldr r3, [r9,#60]
+ldr r4, [r9,#76]
+ldr r5, [r9,#92]
+ldr r6, [r9,#108]
+ldr r7, [r9,#124]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro getbyte2
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#8]
+ldr r1, [r9,#24]
+ldr r2, [r9,#40]
+ldr r3, [r9,#56]
+ldr r4, [r9,#72]
+ldr r5, [r9,#88]
+ldr r6, [r9,#104]
+ldr r7, [r9,#120]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro getbyte1
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9,#4]
+ldr r1, [r9,#20]
+ldr r2, [r9,#36]
+ldr r3, [r9,#52]
+ldr r4, [r9,#68]
+ldr r5, [r9,#84]
+ldr r6, [r9,#100]
+ldr r7, [r9,#116]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+.macro getbyte0
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r9]
+ldr r1, [r9,#16]
+ldr r2, [r9,#32]
+ldr r3, [r9,#48]
+ldr r4, [r9,#64]
+ldr r5, [r9,#80]
+ldr r6, [r9,#96]
+ldr r7, [r9,#112]
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+// store r0 at r10 = testvector
+str r0,[r10],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro unbitslice32times
+////////////////////////////////////////////////////////////////////////////////
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+////////////////////////////////////////////////////////////////////////////////
+.endm
 .macro unbitslice
 ////////////////////////////////////////////////////////////////////////////////
 // Unslice one byte
@@ -239,7 +556,7 @@ str r4, [r14]
 
 .macro bitslice4 arg0:req
 ////////////////////////////////////////////////////////////////////////////////
-ldr r0, [r14,#\arg0]
+ldr r0, [r13,#\arg0]
 
 bfi r1,r0,#31,#1
 lsr r0, #1 // Throw out the least significant bit we just bitsliced
@@ -270,7 +587,7 @@ asr r8, #4
 
 .macro bitslice3 arg0:req
 ////////////////////////////////////////////////////////////////////////////////
-ldr r0, [r14,#\arg0]
+ldr r0, [r13,#\arg0]
 
 bfi r1,r0,#31,#1
 lsr r0, #1
@@ -381,6 +698,7 @@ polynomials2:
 .word 0
 .word 0
 unbitslicestore: .skip 256
+roundresult: .skip 256
 
 .text
     .syntax unified
@@ -392,150 +710,20 @@ ldr r0,=testvector
 ldr r14,=step1
 
 // Sbox the bytes
-sbox12
-sbox12
-sbox12
-sbox12
-sbox12
-sbox4
+sboxall
 // That should be 326 cycles for one sbox
-
-// correct r14 to be pointing to the start of sboxed bytes (=step1)
-add r14,r14,#-252
-// Bitslice the bytes
-// Bitslice byte 0
-bitslice4 0
-// The columnshift means we need to get byte number 57 here
-bitslice4 228
-// The columnshift means we need to get byte number 50 here
-bitslice4 200
-// The columnshift means we need to get byte number 43 here
-bitslice4 172
-// The columnshift means we need to get byte number 36 here
-bitslice4 144
-// The columnshift means we need to get byte number 29 here
-bitslice4 116
-// The columnshift means we need to get byte number 22 here
-bitslice4 88
-// The columnshift means we need to get byte number 15 here, 8 byte means use
-// bitslice3
-bitslice3 60
-// Lets get the 0th byte from r14-252
 .ltorg
-// r13 points at the sbox now
-add r13,r13,#1024
-// r13 points at mds1 now
-loadmds1
-add r13,r13,#32
-// r13 points at polynomials1 now
-bitslicedmult
-add r13,r13,#-16
-// r13 points at mds2 now
-loadmds2
-add r13,r13,#56
-// r13 points at polynomials2 now
-bitslicedmult
-add r13,r13,#-40
-// r13 points at polynomials1 now
-add r9,r13,#80
-// Make sure r0[31:8 is empty]
-eor r0,r0,r0
-// Load the multiplication result in the registers
-ldr r1,[r13]
-ldr r2,[r13,#4]
-ldr r3,[r13,#8]
-ldr r4,[r13,#12]
-ldr r5,[r13,#16]
-ldr r6,[r13,#20]
-ldr r7,[r13,#24]
-ldr r8,[r13,#28]
-// We shall store these 64 bytes at r9 = unbitslicestore
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-// 32 Bytes unbitsliced, now the r2 stored at polynomials2
-add r13,r13,#40
-// r13 points to polynomials2
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-unbitslice
-// Get bytes 0,4,8,...28:
-add r9,r9,#-256
-ldr r1, [r9]
-ldr r2, [r9,#16]
-ldr r3, [r9,#32]
-ldr r4, [r9,#48]
-ldr r5, [r9,#64]
-ldr r6, [r9,#80]
-ldr r7, [r9,#96]
-ldr r0, [r9,#112]
+// correct r13 to be pointing to the start of sboxed bytes (=step1)
+add r13,r13,#-256
 
-// Eor them into r0
-eor r0,r0,r1
-eor r0,r0,r2
-eor r0,r0,r3
-eor r0,r0,r4
-eor r0,r0,r5
-eor r0,r0,r6
-eor r0,r0,r7
-
-// r0 should contain 0x02
+onevector 0,228,200,172,144,116,88,60,256
+onevector 32,4,232,204,176,148,120,92,288
+onevector 64,36,8,236,208,180,152,124,320
+onevector 96,68,40,12,240,212,184,156,352
+onevector 128,100,72,44,16,244,216,188,384
+onevector 160,132,104,76,48,20,248,220,416
+onevector 192,164,136,108,80,52,24,252,448
+onevector 224,196,168,140,112,84,56,28,480
+// EOR 8 words starting at r10-0x100
 nop
+
