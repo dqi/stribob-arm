@@ -32,6 +32,24 @@ mdsmatrix_1:
 .word 0x124800
 .word 0x49248012
 .word 0x12492480
+mdsmatrix_2:
+.word 0
+.word 0
+.word 0
+.word 0
+// Here we will store the bitsliced polynomial results from the matrix
+// multiplication. Offset 0 = x^0, offset 40 = x^10
+polynomials:
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
 
 .text
     .syntax unified
@@ -656,3 +674,120 @@ ldr r12, [r0,#12]
 // r0: points to mdsmatrix
 // r13: pointer to base of sbox
 // r1-12 bitsliced polynomials
+
+// Use r14 as the storagepointer
+ldr r14,=polynomials
+
+// We will need the 8th,9th and 10th degree first
+
+// 10th degree
+and r0,r8,r12
+str r0,[r14,#40]
+
+// 9th degree
+and r0,r8,r11
+and r13,r7,r12
+eor r0,r0,r13
+str r0,[r14,#36]
+
+// 8th degree
+and r0,r8,r10
+and r13,r7,r11
+eor r0,r0,r13
+and r13,r6,r12
+eor r0,r0,r13
+str r0,[r14,#32]
+
+// Now we can calculate the 0th-7th degrees
+
+// 0th degree, because 8th degree is still in r0 we do not load it this time
+and r13,r1,r9
+eor r0,r0,r13
+str r0,[r14]
+
+// 1st degree
+ldr r0,[r14,#36]
+and r13,r1,r10
+eor r0,r0,r13
+and r13,r2,r9
+eor r0,r0,r13
+str r0,[r14,#4]
+
+// 2nd degree
+ldr r0,[r14,#32]
+ldr r13,[r14,#40]
+eor r0,r0,r13
+and r13,r1,r11
+eor r0,r0,r13
+and r13,r2,r10
+eor r0,r0,r13
+and r13,r3,r9
+eor r0,r0,r13
+str r0,[r14,#8]
+
+// 3th degree
+ldr r0,[r14,#32]
+ldr r13,[r14,#36]
+eor r0,r0,r13
+and r13,r1,r12
+eor r0,r0,r13
+and r13,r2,r11
+eor r0,r0,r13
+and r13,r3,r10
+eor r0,r0,r13
+str r0,[r14,#12]
+
+// 4th degree
+ldr r0,[r14,#32]
+ldr r13,[r14,#36]
+eor r0,r0,r13
+ldr r13,[r14,#40]
+eor r0,r0,r13
+and r13,r2,r12
+eor r0,r0,r13
+and r13,r3,r11
+eor r0,r0,r13
+and r13,r4,r10
+eor r0,r0,r13
+and r13,r5,r9
+eor r0,r0,r13
+str r0,[r14,#16]
+
+// 5th degree
+ldr r0,[r14,#40]
+ldr r13,[r14,#36]
+eor r0,r0,r13
+and r13,r3,r12
+eor r0,r0,r13
+and r13,r4,r11
+eor r0,r0,r13
+and r13,r5,r10
+eor r0,r0,r13
+and r13,r6,r9
+eor r0,r0,r13
+str r0,[r14,#20]
+
+// 6th degree
+ldr r0,[r14,#40]
+and r13,r4,r12
+eor r0,r0,r13
+and r13,r5,r11
+eor r0,r0,r13
+and r13,r6,r10
+eor r0,r0,r13
+and r13,r7,r9
+eor r0,r0,r13
+str r0,[r14,#24]
+
+// 7th degree
+and r0,r5,r12
+and r13,r6,r11
+eor r0,r0,r13
+and r13,r7,r10
+eor r0,r0,r13
+and r13,r8,r9
+eor r0,r0,r13
+str r0,[r14,#28]
+
+// Now we have 32 the polynomials multiplied and stored, lets do another 32.
+// Load magic matrix constants for the other half
