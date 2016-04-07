@@ -1,3 +1,336 @@
+// Macro's
+
+// sbox12: when inserted r13 points at sbox, r14 at storage for the result of the
+// sbox and r0 at the input data. in and output are words. sbox8 uses r0-r12 for
+// variables
+
+
+// sbox4: when inserted r13 points at sbox, r14 at storage for the result of the
+// sbox and r0 at the input data. in and output are words. sbox4 uses r0-r4 for
+// variables
+
+// bitslice4: when inserted r14 points at the base of sboxed bytes, it will
+// bitslice the lsb of the byte at r14+arg0 into r1-r8 and asr #4 to copy it 4 times, it
+// will also throw out the lsb in r0 so this can be inserted in succesion to
+// bitslice the full byte
+
+// bitslicedmult: when inserted r13 points to an area of memory where we can
+// store 10 polynomials, there should be bitsliced poynomials in r1-r12, with
+// r9,r10,r11,r12 being the polynomials from the bitsliced matrix;
+// calculations are done with r0 and r14.
+
+// unbitslice: when inserted r13 points to bitsliced polynomials, it will
+// unbitslice 8 polynomials stored there into r0 and store the byte at r9. uses
+// r1-r8 for unbitslicing
+
+.macro unbitslice
+////////////////////////////////////////////////////////////////////////////////
+// Load the multiplication result in the registers
+ldr r1,[r13]
+ldr r2,[r13,#4]
+ldr r3,[r13,#8]
+ldr r4,[r13,#12]
+ldr r5,[r13,#16]
+ldr r6,[r13,#20]
+ldr r7,[r13,#24]
+ldr r8,[r13,#28]
+
+// Make sure r0[31:8 is empty]
+eor r0,r0,r0
+
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte and increase r9
+str r0,[r9],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro bitslicedmult
+////////////////////////////////////////////////////////////////////////////////
+// 10th degree
+and r0,r8,r12
+str r0,[r13,#40]
+// 9th degree
+and r0,r8,r11
+and r14,r7,r12
+eor r0,r0,r14
+str r0,[r13,#36]
+// 8th degree
+and r0,r8,r10
+and r14,r7,r11
+eor r0,r0,r14
+and r14,r6,r12
+eor r0,r0,r14
+str r0,[r13,#32]
+// 0th degree, because 8th degree is still in r0 we do not load it this time
+and r14,r1,r9
+eor r0,r0,r14
+str r0,[r13]
+// 1st degree
+ldr r0,[r13,#36]
+and r14,r1,r10
+eor r0,r0,r14
+and r14,r2,r9
+eor r0,r0,r14
+str r0,[r13,#4]
+// 2nd degree
+ldr r0,[r13,#32]
+ldr r14,[r13,#40]
+eor r0,r0,r14
+and r14,r1,r11
+eor r0,r0,r14
+and r14,r2,r10
+eor r0,r0,r14
+and r14,r3,r9
+eor r0,r0,r14
+str r0,[r13,#8]
+// 3th degree
+ldr r0,[r13,#32]
+ldr r14,[r13,#36]
+eor r0,r0,r14
+and r14,r1,r12
+eor r0,r0,r14
+and r14,r2,r11
+eor r0,r0,r14
+and r14,r3,r10
+eor r0,r0,r14
+and r14,r4,r9
+eor r0,r0,r14
+str r0,[r13,#12]
+// 4th degree
+ldr r0,[r13,#32]
+ldr r14,[r13,#36]
+eor r0,r0,r14
+ldr r14,[r13,#40]
+eor r0,r0,r14
+and r14,r2,r12
+eor r0,r0,r14
+and r14,r3,r11
+eor r0,r0,r14
+and r14,r4,r10
+eor r0,r0,r14
+and r14,r5,r9
+eor r0,r0,r14
+str r0,[r13,#16]
+// 5th degree
+ldr r0,[r13,#40]
+ldr r14,[r13,#36]
+eor r0,r0,r14
+and r14,r3,r12
+eor r0,r0,r14
+and r14,r4,r11
+eor r0,r0,r14
+and r14,r5,r10
+eor r0,r0,r14
+and r14,r6,r9
+eor r0,r0,r14
+str r0,[r13,#20]
+// 6th degree
+ldr r0,[r13,#40]
+and r14,r4,r12
+eor r0,r0,r14
+and r14,r5,r11
+eor r0,r0,r14
+and r14,r6,r10
+eor r0,r0,r14
+and r14,r7,r9
+eor r0,r0,r14
+str r0,[r13,#24]
+// 7th degree
+and r0,r5,r12
+and r14,r6,r11
+eor r0,r0,r14
+and r14,r7,r10
+eor r0,r0,r14
+and r14,r8,r9
+eor r0,r0,r14
+str r0,[r13,#28]
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro sbox12
+////////////////////////////////////////////////////////////////////////////////
+// Sbox 12 bytes, in 61 cycles
+// Load 12 bytes to sbox (13 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+ldr r5, [r0], #4
+ldr r6, [r0], #4
+ldr r7, [r0], #4
+ldr r8, [r0], #4
+ldr r9, [r0], #4
+ldr r10, [r0], #4
+ldr r11, [r0], #4
+ldr r12, [r0], #4
+
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (12 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+lsl r5, #2
+lsl r6, #2
+lsl r7, #2
+lsl r8, #2
+lsl r9, #2
+lsl r10, #2
+lsl r11, #2
+lsl r12, #2
+
+// Do the sbox and store the bytes (3 cycles per byte, 36 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r13,r2]
+str r2, [r14], #4
+ldr r3, [r13,r3]
+str r3, [r14], #4
+ldr r4, [r13,r4]
+str r4, [r14], #4
+ldr r5, [r13,r5]
+str r5, [r14], #4
+ldr r6, [r13,r6]
+str r6, [r14], #4
+ldr r7, [r13,r7]
+str r7, [r14], #4
+ldr r8, [r13,r8]
+str r8, [r14], #4
+ldr r9, [r13,r9]
+str r9, [r14], #4
+ldr r10, [r13,r10]
+str r10, [r14], #4
+ldr r11, [r13,r11]
+str r11, [r14], #4
+ldr r12, [r13,r12]
+str r12, [r14], #4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro sbox4
+////////////////////////////////////////////////////////////////////////////////
+// Sbox 4 bytes, in 21 cycles
+// Load 12 bytes to sbox (5 cycles)
+ldr r1, [r0], #4
+ldr r2, [r0], #4
+ldr r3, [r0], #4
+ldr r4, [r0], #4
+// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
+// cycles. (Instead we can use word-align) (4 cycles)
+lsl r1, #2
+lsl r2, #2
+lsl r3, #2
+lsl r4, #2
+// Do the sbox and store the bytes (3 cycles per byte, 12 total)
+ldr r1, [r13,r1]
+str r1, [r14], #4
+ldr r2, [r13,r2]
+str r2, [r14], #4
+ldr r3, [r13,r3]
+str r3, [r14], #4
+ldr r4, [r13,r4]
+str r4, [r14]
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro bitslice4 arg0:req
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r14,#\arg0]
+
+bfi r1,r0,#31,#1
+lsr r0, #1 // Throw out the least significant bit we just bitsliced
+bfi r2,r0,#31,#1
+lsr r0, #1
+bfi r3,r0,#31,#1
+lsr r0, #1
+bfi r4,r0,#31,#1
+lsr r0, #1
+bfi r5,r0,#31,#1
+lsr r0, #1
+bfi r6,r0,#31,#1
+lsr r0, #1
+bfi r7,r0,#31,#1
+lsr r0, #1
+bfi r8,r0,#31,#1
+
+asr r1, #4 // Copy the bit 4 times
+asr r2, #4
+asr r3, #4
+asr r4, #4
+asr r5, #4
+asr r6, #4
+asr r7, #4
+asr r8, #4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro bitslice3 arg0:req
+////////////////////////////////////////////////////////////////////////////////
+ldr r0, [r14,#\arg0]
+
+bfi r1,r0,#31,#1
+lsr r0, #1
+bfi r2,r0,#31,#1
+lsr r0, #1
+bfi r3,r0,#31,#1
+lsr r0, #1
+bfi r4,r0,#31,#1
+lsr r0, #1
+bfi r5,r0,#31,#1
+lsr r0, #1
+bfi r6,r0,#31,#1
+lsr r0, #1
+bfi r7,r0,#31,#1
+lsr r0, #1
+bfi r8,r0,#31,#1
+asr r1, #3
+asr r2, #3
+asr r3, #3
+asr r4, #3
+asr r5, #3
+asr r6, #3
+asr r7, #3
+asr r8, #3
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro loadmds1
+////////////////////////////////////////////////////////////////////////////////
+add r0,r13,#256
+ldr r9,[r0]
+ldr r10, [r0,#4]
+ldr r11, [r0,#8]
+ldr r12, [r0,#12]
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro loadmds2
+////////////////////////////////////////////////////////////////////////////////
+add r0,r13,#-16
+ldr r9,[r0]
+ldr r10, [r0,#4]
+ldr r11, [r0,#8]
+ldr r12, [r0,#12]
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
 .data
 .balign 4
 testvector:
@@ -67,2187 +400,129 @@ unbitslicestore: .skip 256
 .text
     .syntax unified
     .globl _start
-
 _start:
 // Get the base sbox-address
 ldr r13,=sbox
-// test
 ldr r0,=testvector
 ldr r14,=step1
 
-// This piece of assembly (function?) does the following:
-// r0 pointer to 64 bytes to be sboxed
-// at the end all the bytes will be sboxed in step1
-
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 12 bytes, in 61 cycles
-// Load 12 bytes to sbox (13 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (12 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 36 total)
-ldr r1, [r13,r1]
-str r1, [r14], #4
-ldr r2, [r13,r2]
-str r2, [r14], #4
-ldr r3, [r13,r3]
-str r3, [r14], #4
-ldr r4, [r13,r4]
-str r4, [r14], #4
-ldr r5, [r13,r5]
-str r5, [r14], #4
-ldr r6, [r13,r6]
-str r6, [r14], #4
-ldr r7, [r13,r7]
-str r7, [r14], #4
-ldr r8, [r13,r8]
-str r8, [r14], #4
-ldr r9, [r13,r9]
-str r9, [r14], #4
-ldr r10, [r13,r10]
-str r10, [r14], #4
-ldr r11, [r13,r11]
-str r11, [r14], #4
-ldr r12, [r13,r12]
-str r12, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 12 bytes, in 61 cycles
-// Load 12 bytes to sbox (13 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (12 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 36 total)
-ldr r1, [r13,r1]
-str r1, [r14], #4
-ldr r2, [r13,r2]
-str r2, [r14], #4
-ldr r3, [r13,r3]
-str r3, [r14], #4
-ldr r4, [r13,r4]
-str r4, [r14], #4
-ldr r5, [r13,r5]
-str r5, [r14], #4
-ldr r6, [r13,r6]
-str r6, [r14], #4
-ldr r7, [r13,r7]
-str r7, [r14], #4
-ldr r8, [r13,r8]
-str r8, [r14], #4
-ldr r9, [r13,r9]
-str r9, [r14], #4
-ldr r10, [r13,r10]
-str r10, [r14], #4
-ldr r11, [r13,r11]
-str r11, [r14], #4
-ldr r12, [r13,r12]
-str r12, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 12 bytes, in 61 cycles
-// Load 12 bytes to sbox (13 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (12 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 36 total)
-ldr r1, [r13,r1]
-str r1, [r14], #4
-ldr r2, [r13,r2]
-str r2, [r14], #4
-ldr r3, [r13,r3]
-str r3, [r14], #4
-ldr r4, [r13,r4]
-str r4, [r14], #4
-ldr r5, [r13,r5]
-str r5, [r14], #4
-ldr r6, [r13,r6]
-str r6, [r14], #4
-ldr r7, [r13,r7]
-str r7, [r14], #4
-ldr r8, [r13,r8]
-str r8, [r14], #4
-ldr r9, [r13,r9]
-str r9, [r14], #4
-ldr r10, [r13,r10]
-str r10, [r14], #4
-ldr r11, [r13,r11]
-str r11, [r14], #4
-ldr r12, [r13,r12]
-str r12, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 12 bytes, in 61 cycles
-// Load 12 bytes to sbox (13 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (12 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 36 total)
-ldr r1, [r13,r1]
-str r1, [r14], #4
-ldr r2, [r13,r2]
-str r2, [r14], #4
-ldr r3, [r13,r3]
-str r3, [r14], #4
-ldr r4, [r13,r4]
-str r4, [r14], #4
-ldr r5, [r13,r5]
-str r5, [r14], #4
-ldr r6, [r13,r6]
-str r6, [r14], #4
-ldr r7, [r13,r7]
-str r7, [r14], #4
-ldr r8, [r13,r8]
-str r8, [r14], #4
-ldr r9, [r13,r9]
-str r9, [r14], #4
-ldr r10, [r13,r10]
-str r10, [r14], #4
-ldr r11, [r13,r11]
-str r11, [r14], #4
-ldr r12, [r13,r12]
-str r12, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 12 bytes, in 61 cycles
-// Load 12 bytes to sbox (13 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-ldr r5, [r0], #4
-ldr r6, [r0], #4
-ldr r7, [r0], #4
-ldr r8, [r0], #4
-ldr r9, [r0], #4
-ldr r10, [r0], #4
-ldr r11, [r0], #4
-ldr r12, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (12 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-lsl r5, #2
-lsl r6, #2
-lsl r7, #2
-lsl r8, #2
-lsl r9, #2
-lsl r10, #2
-lsl r11, #2
-lsl r12, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 36 total)
-ldr r1, [r13,r1]
-str r1, [r14], #4
-ldr r2, [r13,r2]
-str r2, [r14], #4
-ldr r3, [r13,r3]
-str r3, [r14], #4
-ldr r4, [r13,r4]
-str r4, [r14], #4
-ldr r5, [r13,r5]
-str r5, [r14], #4
-ldr r6, [r13,r6]
-str r6, [r14], #4
-ldr r7, [r13,r7]
-str r7, [r14], #4
-ldr r8, [r13,r8]
-str r8, [r14], #4
-ldr r9, [r13,r9]
-str r9, [r14], #4
-ldr r10, [r13,r10]
-str r10, [r14], #4
-ldr r11, [r13,r11]
-str r11, [r14], #4
-ldr r12, [r13,r12]
-str r12, [r14], #4
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Sbox 4 bytes, in 21 cycles
-// Load 12 bytes to sbox (5 cycles)
-ldr r1, [r0], #4
-ldr r2, [r0], #4
-ldr r3, [r0], #4
-ldr r4, [r0], #4
-
-// Multiply the offsets so we do not have to use byte offsets (ldrb) which would add two
-// cycles. (Instead we can use word-align) (4 cycles)
-lsl r1, #2
-lsl r2, #2
-lsl r3, #2
-lsl r4, #2
-
-// Do the sbox and store the bytes (3 cycles per byte, 12 total)
-ldr r1, [r13,r1]
-str r1, [r14], #4
-ldr r2, [r13,r2]
-str r2, [r14], #4
-ldr r3, [r13,r3]
-str r3, [r14], #4
-ldr r4, [r13,r4]
-str r4, [r14]
-////////////////////////////////////////////////////////////////////////////////
+// Sbox the bytes
+sbox12
+sbox12
+sbox12
+sbox12
+sbox12
+sbox4
 // That should be 326 cycles for one sbox
-// Lets get the 0th byte from r14-252
-ldr r0, [r14, -252]!
 
-// Let us bitslice this byte into r1-r8
-// #1 bits in r1 starting at #31 are repleaced by #1 bits from r0 starting at
-// bit[0]
-// Using ASR in a smart way can probably save a few cycles, just mind the last
-// one.
-bfi r1,r0,#31,#1
-asr r1, #4 // Copy the bit 4 times
-lsr r0, #1 // Throw out the least significant bit we just bitsliced
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-// now the 30-27 bit of r1-r8 contains the first byte bitsliced (so we have it 4
-// times, and we will need this 4 times for the multiplication)
-
-// Do this for seven more bytes:
+// correct r14 to be pointing to the start of sboxed bytes (=step1)
+add r14,r14,#-252
+// Bitslice the bytes
+// Bitslice byte 0
+bitslice4 0
 // The columnshift means we need to get byte number 57 here
-ldr r0, [r14, #228]
-
-bfi r1,r0,#31,#1
-asr r1, #4
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-// Do this for six more bytes:
+bitslice4 228
 // The columnshift means we need to get byte number 50 here
-ldr r0, [r14, #200]
-
-bfi r1,r0,#31,#1
-asr r1, #4
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-// Do this for five more bytes:
+bitslice4 200
 // The columnshift means we need to get byte number 43 here
-ldr r0, [r14, #172]
-
-bfi r1,r0,#31,#1
-asr r1, #4
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-// Do this for four more bytes:
+bitslice4 172
 // The columnshift means we need to get byte number 36 here
-ldr r0, [r14, #144]
-
-bfi r1,r0,#31,#1
-asr r1, #4
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-// Do this for three more bytes:
+bitslice4 144
 // The columnshift means we need to get byte number 29 here
-ldr r0, [r14, #116]
-
-bfi r1,r0,#31,#1
-asr r1, #4
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-// Do this for two more bytes:
+bitslice4 116
 // The columnshift means we need to get byte number 22 here
-ldr r0, [r14, #88]
-
-bfi r1,r0,#31,#1
-asr r1, #4
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #4
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #4
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #4
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #4
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #4
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #4
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #4
-
-// For the last byte the asr shift is only 3
-// The columnshift means we need to get byte number 15 here
-ldr r0, [r14, #60]
-
-bfi r1,r0,#31,#1
-asr r1, #3
-lsr r0, #1
-
-bfi r2,r0,#31,#1
-asr r2, #3
-lsr r0, #1
-
-bfi r3,r0,#31,#1
-asr r3, #3
-lsr r0, #1
-
-bfi r4,r0,#31,#1
-asr r4, #3
-lsr r0, #1
-
-bfi r5,r0,#31,#1
-asr r5, #3
-lsr r0, #1
-
-bfi r6,r0,#31,#1
-asr r6, #3
-lsr r0, #1
-
-bfi r7,r0,#31,#1
-asr r7, #3
-lsr r0, #1
-
-bfi r8,r0,#31,#1
-asr r8, #3
-// One vector bitsliced into r1-r8, next up bitslicing the matrix into
-// r9,10,11,12, they use low weight matrix so it fits in four registers :),
-// be sure to take bytes per row (so first four bytes are from the first row)
-
-// first row is 01 01 04 01... actually these are constants which we can load
-// from somewhere
-ldr r0,=mdsmatrix_1
-ldr r9,[r0]
-ldr r10, [r0,#4]
-ldr r11, [r0,#8]
-ldr r12, [r0,#12]
-
-// Time for some finite field multiplication
-// r14: points to sboxed bytes
-// r0: points to mdsmatrix
-// r13: pointer to base of sbox
-// r1-12 bitsliced polynomials
-
-// Use r13 as the storagepointer
-ldr r13,=polynomials
-
-// We will need the 8th,9th and 10th degree first
-
-// 10th degree
-and r0,r8,r12
-str r0,[r13,#40]
-
-// 9th degree
-and r0,r8,r11
-and r14,r7,r12
-eor r0,r0,r14
-str r0,[r13,#36]
-
-// 8th degree
-and r0,r8,r10
-and r14,r7,r11
-eor r0,r0,r14
-and r14,r6,r12
-eor r0,r0,r14
-str r0,[r13,#32]
-
-// Now we can calculate the 0th-7th degrees
-
-// 0th degree, because 8th degree is still in r0 we do not load it this time
-and r14,r1,r9
-eor r0,r0,r14
-str r0,[r13]
-
-// 1st degree
-ldr r0,[r13,#36]
-and r14,r1,r10
-eor r0,r0,r14
-and r14,r2,r9
-eor r0,r0,r14
-str r0,[r13,#4]
-
-// 2nd degree
-ldr r0,[r13,#32]
-ldr r14,[r13,#40]
-eor r0,r0,r14
-and r14,r1,r11
-eor r0,r0,r14
-and r14,r2,r10
-eor r0,r0,r14
-and r14,r3,r9
-eor r0,r0,r14
-str r0,[r13,#8]
-
-// 3th degree
-ldr r0,[r13,#32]
-ldr r14,[r13,#36]
-eor r0,r0,r14
-and r14,r1,r12
-eor r0,r0,r14
-and r14,r2,r11
-eor r0,r0,r14
-and r14,r3,r10
-eor r0,r0,r14
-and r14,r4,r9
-eor r0,r0,r14
-str r0,[r13,#12]
-
-// 4th degree
-ldr r0,[r13,#32]
-ldr r14,[r13,#36]
-eor r0,r0,r14
-ldr r14,[r13,#40]
-eor r0,r0,r14
-and r14,r2,r12
-eor r0,r0,r14
-and r14,r3,r11
-eor r0,r0,r14
-and r14,r4,r10
-eor r0,r0,r14
-and r14,r5,r9
-eor r0,r0,r14
-str r0,[r13,#16]
-
-// 5th degree
-ldr r0,[r13,#40]
-ldr r14,[r13,#36]
-eor r0,r0,r14
-and r14,r3,r12
-eor r0,r0,r14
-and r14,r4,r11
-eor r0,r0,r14
-and r14,r5,r10
-eor r0,r0,r14
-and r14,r6,r9
-eor r0,r0,r14
-str r0,[r13,#20]
-
-// 6th degree
-ldr r0,[r13,#40]
-and r14,r4,r12
-eor r0,r0,r14
-and r14,r5,r11
-eor r0,r0,r14
-and r14,r6,r10
-eor r0,r0,r14
-and r14,r7,r9
-eor r0,r0,r14
-str r0,[r13,#24]
-
-// 7th degree
-and r0,r5,r12
-and r14,r6,r11
-eor r0,r0,r14
-and r14,r7,r10
-eor r0,r0,r14
-and r14,r8,r9
-eor r0,r0,r14
-str r0,[r13,#28]
-
-// Now we have 32 the polynomials multiplied and stored, lets do another 32.
-// Use r13 as the storagepointer
-ldr r13,=polynomials2
-// Load magic matrix constants for the other half
-ldr r0,=mdsmatrix_2
-ldr r9,[r0]
-ldr r10, [r0,#4]
-ldr r11, [r0,#8]
-ldr r12, [r0,#12]
-
-// We will need the 8th,9th and 10th degree first
-// 10th degree
-and r0,r8,r12
-str r0,[r13,#40]
-
-// 9th degree
-and r0,r8,r11
-and r14,r7,r12
-eor r0,r0,r14
-str r0,[r13,#36]
-
-// 8th degree
-and r0,r8,r10
-and r14,r7,r11
-eor r0,r0,r14
-and r14,r6,r12
-eor r0,r0,r14
-str r0,[r13,#32]
-
-// Now we can calculate the 0th-7th degrees
-
-// 0th degree, because 8th degree is still in r0 we do not load it this time
-and r14,r1,r9
-eor r0,r0,r14
-str r0,[r13]
-
-// 1st degree
-ldr r0,[r13,#36]
-and r14,r1,r10
-eor r0,r0,r14
-and r14,r2,r9
-eor r0,r0,r14
-str r0,[r13,#4]
-
-// 2nd degree
-ldr r0,[r13,#32]
-ldr r14,[r13,#40]
-eor r0,r0,r14
-and r14,r1,r11
-eor r0,r0,r14
-and r14,r2,r10
-eor r0,r0,r14
-and r14,r3,r9
-eor r0,r0,r14
-str r0,[r13,#8]
-
-// 3th degree
-ldr r0,[r13,#32]
-ldr r14,[r13,#36]
-eor r0,r0,r14
-and r14,r1,r12
-eor r0,r0,r14
-and r14,r2,r11
-eor r0,r0,r14
-and r14,r3,r10
-eor r0,r0,r14
-and r14,r4,r9
-eor r0,r0,r14
-str r0,[r13,#12]
-
-// 4th degree
-ldr r0,[r13,#32]
-ldr r14,[r13,#36]
-eor r0,r0,r14
-ldr r14,[r13,#40]
-eor r0,r0,r14
-and r14,r2,r12
-eor r0,r0,r14
-and r14,r3,r11
-eor r0,r0,r14
-and r14,r4,r10
-eor r0,r0,r14
-and r14,r5,r9
-eor r0,r0,r14
-str r0,[r13,#16]
-
-// 5th degree
-ldr r0,[r13,#40]
-ldr r14,[r13,#36]
-eor r0,r0,r14
-and r14,r3,r12
-eor r0,r0,r14
-and r14,r4,r11
-eor r0,r0,r14
-and r14,r5,r10
-eor r0,r0,r14
-and r14,r6,r9
-eor r0,r0,r14
-str r0,[r13,#20]
-
-// 6th degree
-ldr r0,[r13,#40]
-and r14,r4,r12
-eor r0,r0,r14
-and r14,r5,r11
-eor r0,r0,r14
-and r14,r6,r10
-eor r0,r0,r14
-and r14,r7,r9
-eor r0,r0,r14
-str r0,[r13,#24]
-
-// 7th degree
-and r0,r5,r12
-and r14,r6,r11
-eor r0,r0,r14
-and r14,r7,r10
-eor r0,r0,r14
-and r14,r8,r9
-eor r0,r0,r14
-str r0,[r13,#28]
-
-
-// Now we need to unbitslice these 64 polynomials into bytes, xor the right 8 bytes
-// together (= adding in the finite field)... and that's it?
-
-// Load the multiplication result in the registers
-ldr r13,=polynomials
-ldr r1,[r13]
-ldr r2,[r13,#4]
-ldr r3,[r13,#8]
-ldr r4,[r13,#12]
-ldr r5,[r13,#16]
-ldr r6,[r13,#20]
-ldr r7,[r13,#24]
-ldr r8,[r13,#28]
+bitslice4 88
+// The columnshift means we need to get byte number 15 here, 8 byte means use
+// bitslice3
+bitslice3 60
+// Lets get the 0th byte from r14-252
+.ltorg
+// r13 points at the sbox now
+loadmds1
+// r13 points at mds1 now
+add r13,r13,#32
+// r13 points at polynomials1 now
+bitslicedmult
+add r13,r13,#-16
+// r13 points at mds2 now
+loadmds2
+add r13,r13,#56
+// r13 points at polynomials2 now
+bitslicedmult
+add r13,r13,#-40
+// r13 points at polynomials1 now
+add r9,r13,#80
 // We shall store these 64 bytes at r9 = unbitslicestore
-ldr r9,=unbitslicestore
-// Make sure r0[31:8 is empty]
-eor r0,r0,r0
-
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-
-// 31 more to go, it might be time for macro's
-
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-
-// Now the other 32 bytes:
-
-ldr r13,=polynomials2
-// Load the multiplication result in the registers
-ldr r1,[r13]
-ldr r2,[r13,#4]
-ldr r3,[r13,#8]
-ldr r4,[r13,#12]
-ldr r5,[r13,#16]
-ldr r6,[r13,#20]
-ldr r7,[r13,#24]
-ldr r8,[r13,#28]
-
-// make sure r0[31:8] is 0
-eor r0,r0,r0
-
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte
-str r0,[r9],#4
-// Unslice one byte
-bfi r0,r1,#0,#1
-bfi r0,r2,#1,#1
-bfi r0,r3,#2,#1
-bfi r0,r4,#3,#1
-bfi r0,r5,#4,#1
-bfi r0,r6,#5,#1
-bfi r0,r7,#6,#1
-bfi r0,r8,#7,#1
-// Throw the unbitsliced byte out
-lsr r1,#1
-lsr r2,#1
-lsr r3,#1
-lsr r4,#1
-lsr r5,#1
-lsr r6,#1
-lsr r7,#1
-lsr r8,#1
-// Store the byte do not increase so we can address with r9-252
-str r0,[r9]
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+// 32 Bytes unbitsliced, now the r2 stored at polynomials2
+add r13,r13,#40
+// r13 points to polynomials2
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
+unbitslice
 
 // Get bytes 0,4,8,...28:
-ldr r1, [r9,#-252]!
+add r9,r9,#-256
+ldr r1, [r9]
 ldr r2, [r9,#16]
 ldr r3, [r9,#32]
 ldr r4, [r9,#48]
