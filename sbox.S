@@ -50,6 +50,19 @@ polynomials:
 .word 0
 .word 0
 .word 0
+// Same for another 32 polynomials
+polynomials2:
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+.word 0
+unbitslicestore: .skip 256
 
 .text
     .syntax unified
@@ -791,3 +804,1457 @@ str r0,[r14,#28]
 
 // Now we have 32 the polynomials multiplied and stored, lets do another 32.
 // Load magic matrix constants for the other half
+ldr r0,=mdsmatrix_2
+ldr r9,[r0]
+ldr r10, [r0,#4]
+ldr r11, [r0,#8]
+ldr r12, [r0,#12]
+
+// Same calculations as before but store somewhere else
+
+ldr r14,=polynomials2
+// 10th degree
+and r0,r8,r12
+str r0,[r14,#40]
+
+// 9th degree
+and r0,r8,r11
+and r13,r7,r12
+eor r0,r0,r13
+str r0,[r14,#36]
+
+// 8th degree
+and r0,r8,r10
+and r13,r7,r11
+eor r0,r0,r13
+and r13,r6,r12
+eor r0,r0,r13
+str r0,[r14,#32]
+
+// 0th degree, because 8th degree is still in r0 we do not load it this time
+and r13,r1,r9
+eor r0,r0,r13
+str r0,[r14]
+
+// 1st degree
+ldr r0,[r14,#36]
+and r13,r1,r10
+eor r0,r0,r13
+and r13,r2,r9
+eor r0,r0,r13
+str r0,[r14,#4]
+
+// 2nd degree
+ldr r0,[r14,#32]
+ldr r13,[r14,#40]
+eor r0,r0,r13
+and r13,r1,r11
+eor r0,r0,r13
+and r13,r2,r10
+eor r0,r0,r13
+and r13,r3,r9
+eor r0,r0,r13
+str r0,[r14,#8]
+
+// 3th degree
+ldr r0,[r14,#32]
+ldr r13,[r14,#36]
+eor r0,r0,r13
+and r13,r1,r12
+eor r0,r0,r13
+and r13,r2,r11
+eor r0,r0,r13
+and r13,r3,r10
+eor r0,r0,r13
+str r0,[r14,#12]
+
+// 4th degree
+ldr r0,[r14,#32]
+ldr r13,[r14,#36]
+eor r0,r0,r13
+ldr r13,[r14,#40]
+eor r0,r0,r13
+and r13,r2,r12
+eor r0,r0,r13
+and r13,r3,r11
+eor r0,r0,r13
+and r13,r4,r10
+eor r0,r0,r13
+and r13,r5,r9
+eor r0,r0,r13
+str r0,[r14,#16]
+
+// 5th degree
+ldr r0,[r14,#40]
+ldr r13,[r14,#36]
+eor r0,r0,r13
+and r13,r3,r12
+eor r0,r0,r13
+and r13,r4,r11
+eor r0,r0,r13
+and r13,r5,r10
+eor r0,r0,r13
+and r13,r6,r9
+eor r0,r0,r13
+str r0,[r14,#20]
+
+// 6th degree
+ldr r0,[r14,#40]
+and r13,r4,r12
+eor r0,r0,r13
+and r13,r5,r11
+eor r0,r0,r13
+and r13,r6,r10
+eor r0,r0,r13
+and r13,r7,r9
+eor r0,r0,r13
+str r0,[r14,#24]
+
+// 7th degree
+and r0,r5,r12
+and r13,r6,r11
+eor r0,r0,r13
+and r13,r7,r10
+eor r0,r0,r13
+and r13,r8,r9
+eor r0,r0,r13
+str r0,[r14,#28]
+
+// Now we need to unbitslice these 64 polynomials into bytes, xor the right 8 bytes
+// together (= adding in the finite field)... and that's it?
+
+// Load the multiplication result in the registers
+ldr r1,[r14]
+ldr r2,[r14,#4]
+ldr r3,[r14,#8]
+ldr r4,[r14,#12]
+ldr r5,[r14,#16]
+ldr r6,[r14,#20]
+ldr r7,[r14,#24]
+ldr r8,[r14,#28]
+// We shall store these 64 bytes at r9 = unbitslicestore
+ldr r9,=unbitslicestore
+// Make sure r0[31:8 is empty]
+eor r0,r0,r0
+
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+
+// 31 more to go, it might be time for macro's
+
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+
+// Now the other 32 bytes:
+
+ldr r14,=polynomials2
+// Load the multiplication result in the registers
+ldr r1,[r14]
+ldr r2,[r14,#4]
+ldr r3,[r14,#8]
+ldr r4,[r14,#12]
+ldr r5,[r14,#16]
+ldr r6,[r14,#20]
+ldr r7,[r14,#24]
+ldr r8,[r14,#28]
+
+// make sure r0[31:8] is 0
+eor r0,r0,r0
+
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte
+str r0,[r9],#4
+// Unslice one byte
+bfi r0,r1,#0,#1
+bfi r0,r2,#1,#1
+bfi r0,r3,#2,#1
+bfi r0,r4,#3,#1
+bfi r0,r5,#4,#1
+bfi r0,r6,#5,#1
+bfi r0,r7,#6,#1
+bfi r0,r8,#7,#1
+// Throw the unbitsliced byte out
+lsr r1,#1
+lsr r2,#1
+lsr r3,#1
+lsr r4,#1
+lsr r5,#1
+lsr r6,#1
+lsr r7,#1
+lsr r8,#1
+// Store the byte do not increase so we can address with r9-252
+str r0,[r9]
+
+// Get bytes 0,4,8,...28:
+ldr r1, [r9,#-252]!
+ldr r2, [r9,#16]
+ldr r3, [r9,#32]
+ldr r4, [r9,#48]
+ldr r5, [r9,#64]
+ldr r6, [r9,#80]
+ldr r7, [r9,#96]
+ldr r0, [r9,#112]
+
+// Eor them into r0
+eor r0,r0,r1
+eor r0,r0,r2
+eor r0,r0,r3
+eor r0,r0,r4
+eor r0,r0,r5
+eor r0,r0,r6
+eor r0,r0,r7
+
+// r0 should contain 0x02
