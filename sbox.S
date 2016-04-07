@@ -432,8 +432,8 @@ asr r8, #4
 // times, and we will need this 4 times for the multiplication)
 
 // Do this for seven more bytes:
-// The columnshift means we need to get byte number 9 here
-ldr r0, [r14, #36]
+// The columnshift means we need to get byte number 57 here
+ldr r0, [r14, #228]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -466,8 +466,8 @@ lsr r0, #1
 bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for six more bytes:
-// The columnshift means we need to get byte number 18 here
-ldr r0, [r14, #72]
+// The columnshift means we need to get byte number 50 here
+ldr r0, [r14, #200]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -500,8 +500,8 @@ lsr r0, #1
 bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for five more bytes:
-// The columnshift means we need to get byte number 27 here
-ldr r0, [r14, #108]
+// The columnshift means we need to get byte number 43 here
+ldr r0, [r14, #172]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -568,8 +568,8 @@ lsr r0, #1
 bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for three more bytes:
-// The columnshift means we need to get byte number 45 here
-ldr r0, [r14, #180]
+// The columnshift means we need to get byte number 29 here
+ldr r0, [r14, #116]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -602,8 +602,8 @@ lsr r0, #1
 bfi r8,r0,#31,#1
 asr r8, #4
 // Do this for two more bytes:
-// The columnshift means we need to get byte number 54 here
-ldr r0, [r14, #216]
+// The columnshift means we need to get byte number 22 here
+ldr r0, [r14, #88]
 
 bfi r1,r0,#31,#1
 asr r1, #4
@@ -637,8 +637,8 @@ bfi r8,r0,#31,#1
 asr r8, #4
 
 // For the last byte the asr shift is only 3
-// The columnshift means we need to get byte number 63 here
-ldr r0, [r14, #252]
+// The columnshift means we need to get byte number 15 here
+ldr r0, [r14, #60]
 
 bfi r1,r0,#31,#1
 asr r1, #3
@@ -748,13 +748,15 @@ and r14,r2,r11
 eor r0,r0,r14
 and r14,r3,r10
 eor r0,r0,r14
+and r14,r4,r9
+eor r0,r0,r14
 str r0,[r13,#12]
 
 // 4th degree
 ldr r0,[r13,#32]
-ldr r13,[r13,#36]
+ldr r14,[r13,#36]
 eor r0,r0,r14
-ldr r13,[r13,#40]
+ldr r14,[r13,#40]
 eor r0,r0,r14
 and r14,r2,r12
 eor r0,r0,r14
@@ -768,7 +770,7 @@ str r0,[r13,#16]
 
 // 5th degree
 ldr r0,[r13,#40]
-ldr r13,[r13,#36]
+ldr r14,[r13,#36]
 eor r0,r0,r14
 and r14,r3,r12
 eor r0,r0,r14
@@ -868,13 +870,15 @@ and r14,r2,r11
 eor r0,r0,r14
 and r14,r3,r10
 eor r0,r0,r14
+and r14,r4,r9
+eor r0,r0,r14
 str r0,[r13,#12]
 
 // 4th degree
 ldr r0,[r13,#32]
-ldr r13,[r13,#36]
+ldr r14,[r13,#36]
 eor r0,r0,r14
-ldr r13,[r13,#40]
+ldr r14,[r13,#40]
 eor r0,r0,r14
 and r14,r2,r12
 eor r0,r0,r14
@@ -888,7 +892,7 @@ str r0,[r13,#16]
 
 // 5th degree
 ldr r0,[r13,#40]
-ldr r13,[r13,#36]
+ldr r14,[r13,#36]
 eor r0,r0,r14
 and r14,r3,r12
 eor r0,r0,r14
