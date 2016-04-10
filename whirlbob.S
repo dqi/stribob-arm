@@ -25,7 +25,6 @@ add r13,r13,#-64
 ////////////////////////////////////////////////////////////////////////////////
 .endm
 
-nop
 //swap in and output so we can do rounds in succession
 .macro firstvector2 a:req b:req c:req d:req e:req f:req g:req h:req i:req j:req
 ////////////////////////////////////////////////////////////////////////////////
@@ -607,15 +606,13 @@ testvector:
 .word 0x72911459, 0x5F086E76
 .word 0x0718AFE3, 0x65BC09DE
 .word 0xB6AFA180, 0xBCEC2A98
-step: .skip 64
+step: .skip 64s
 
 .text
 	.syntax unified
 	.globl _start
 
 _start:
-ldr r14,=step
-ldr r13,=testvector
 ldr r1,=table0
 ldr r2,=table1
 ldr r3,=table2
@@ -624,11 +621,19 @@ ldr r5,=table4
 ldr r6,=table5
 ldr r7,=table6
 ldr r8,=table7
+ldr r13,=testvector
+ldr r14,=step
 
+.ltorg
+// I dont even know (well I do, .ltorg seems to use r1, this corrects r1 to be at table0 again)
+add r1,r2,-1024
+
+//
 tworounds 0 4 8 12
 tworounds 16 20 24 28
 tworounds 32 36 40 44
 tworounds 48 52 56 60
 tworounds 64 68 72 76
 tworounds 80 84 88 92
-// That's all folks
+// EZPZ, output in r13
+nop
