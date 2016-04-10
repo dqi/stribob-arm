@@ -31,51 +31,52 @@ add r13,r13,#-64
 ////////////////////////////////////////////////////////////////////////////////
 // Get a byte from the input
 ldrb r10,[\in,#\a]
+// Get the input byte in a non-blocking way
+ldrb r11,[\in,#\b]
 // Initial lookups in r0,r1
 ldr r0,[r2,r10,lsl #2]
 ldr r1,[r6,r10,lsl #2]
 
-// Get the input byte
-ldrb r10,[\in,#\b]
 // (Magic) table lookup
-ldr r11,[r3,r10,lsl #2]
-ldr r12,[r7,r10,lsl #2]
+ldr r11,[r3,r11,lsl #2]
+ldr r12,[r7,r11,lsl #2]
+// Already get this byte so we do not block later
+ldrb r10,[\in,#\c]
 // Adding to total
 eor r0,r0,r11
 eor r1,r1,r12
 
 // Repeat a couple of times
-ldrb r10,[\in,#\c]
 ldr r11,[r4,r10,lsl #2]
 ldr r12,[r8,r10,lsl #2]
+ldrb r10,[\in,#\d]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\d]
 ldr r11,[r5,r10,lsl #2]
 ldr r12,[r9,r10,lsl #2]
+ldrb r10,[\in,#\e]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\e]
 ldr r11,[r6,r10,lsl #2]
 ldr r12,[r2,r10,lsl #2]
+ldrb r10,[\in,#\f]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\f]
 ldr r11,[r7,r10,lsl #2]
 ldr r12,[r3,r10,lsl #2]
+ldrb r10,[\in,#\g]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\g]
 ldr r11,[r8,r10,lsl #2]
 ldr r12,[r4,r10,lsl #2]
+ldrb r10,[\in,#\h]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\h]
 ldr r11,[r9,r10,lsl #2]
 ldr r12,[r5,r10,lsl #2]
 eor r0,r0,r11
@@ -91,51 +92,51 @@ str r1,[\out],#4
 ////////////////////////////////////////////////////////////////////////////////
 // Get the bytes from the input
 ldrb r10,[\in,#\a]
+ldrb r11,[\in,#\b]
 // Initial lookups in r0,r1
 ldr r0,[r2,r10,lsl #2]
 ldr r1,[r6,r10,lsl #2]
 
 // Get the input byte
-ldrb r10,[\in,#\b]
 // (Magic) table lookup
-ldr r11,[r3,r10,lsl #2]
-ldr r12,[r7,r10,lsl #2]
+ldr r11,[r3,r11,lsl #2]
+ldr r12,[r7,r11,lsl #2]
+ldrb r10,[\in,#\c]
 // Adding to total
 eor r0,r0,r11
 eor r1,r1,r12
 
 // Repeat a couple of times
-ldrb r10,[\in,#\c]
 ldr r11,[r4,r10,lsl #2]
 ldr r12,[r8,r10,lsl #2]
+ldrb r10,[\in,#\d]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\d]
 ldr r11,[r5,r10,lsl #2]
 ldr r12,[r9,r10,lsl #2]
+ldrb r10,[\in,#\e]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\e]
 ldr r11,[r6,r10,lsl #2]
 ldr r12,[r2,r10,lsl #2]
+ldrb r10,[\in,#\f]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\f]
 ldr r11,[r7,r10,lsl #2]
 ldr r12,[r3,r10,lsl #2]
+ldrb r10,[\in,#\g]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\g]
 ldr r11,[r8,r10,lsl #2]
 ldr r12,[r4,r10,lsl #2]
+ldrb r10,[\in,#\h]
 eor r0,r0,r11
 eor r1,r1,r12
 
-ldrb r10,[\in,#\h]
 ldr r11,[r9,r10,lsl #2]
 ldr r12,[r5,r10,lsl #2]
 eor r0,r0,r11
@@ -464,8 +465,8 @@ ldr r8,=table6
 ldr r9,=table7
 ldr r13,=testvector
 ldr r14,=step
+.pool
 
-.ltorg
 tworounds 0 4 8 12
 tworounds 16 20 24 28
 tworounds 32 36 40 44
