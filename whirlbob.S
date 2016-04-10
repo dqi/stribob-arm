@@ -4,313 +4,151 @@
 .macro tworounds roundkey1:req roundkey2:req roundkey3:req roundkey4:req
 ////////////////////////////////////////////////////////////////////////////////
 // Offsets corrected for big endian...
-firstvector 3 58 49 40 39 30 21 12 \roundkey1 \roundkey2
-vector     11  2 57 48 47 38 29 20
-vector     19 10  1 56 55 46 37 28
-vector	   27 18  9  0 63 54 45 36
-vector	   35 26 17  8  7 62 53 44
-vector	   43 34 25 16 15  6 61 52
-vector	   51 42 33 24 23 14  5 60
-vector	   59 50 41 32 31 22 13  4
+firstvector 3 58 49 40 39 30 21 12 \roundkey1 \roundkey2 r13 r14
+vector     11  2 57 48 47 38 29 20 r13 r14
+vector     19 10  1 56 55 46 37 28 r13 r14
+vector	   27 18  9  0 63 54 45 36 r13 r14
+vector	   35 26 17  8  7 62 53 44 r13 r14
+vector	   43 34 25 16 15  6 61 52 r13 r14
+vector	   51 42 33 24 23 14  5 60 r13 r14
+vector	   59 50 41 32 31 22 13  4 r13 r14
 add r14,r14,#-64
-firstvector2 3 58 49 40 39 30 21 12 \roundkey3 \roundkey4
-vector2     11  2 57 48 47 38 29 20
-vector2     19 10  1 56 55 46 37 28
-vector2	    27 18  9  0 63 54 45 36
-vector2	    35 26 17  8  7 62 53 44
-vector2	    43 34 25 16 15  6 61 52
-vector2	    51 42 33 24 23 14  5 60
-vector2	    59 50 41 32 31 22 13  4
+firstvector 3 58 49 40 39 30 21 12 \roundkey3 \roundkey4 r14 r13
+vector     11  2 57 48 47 38 29 20 r14 r13
+vector     19 10  1 56 55 46 37 28 r14 r13
+vector     27 18  9  0 63 54 45 36 r14 r13
+vector     35 26 17  8  7 62 53 44 r14 r13
+vector     43 34 25 16 15  6 61 52 r14 r13
+vector     51 42 33 24 23 14  5 60 r14 r13
+vector     59 50 41 32 31 22 13  4 r14 r13
 add r13,r13,#-64
 ////////////////////////////////////////////////////////////////////////////////
 .endm
 
-//swap in and output so we can do rounds in succession
-.macro firstvector2 a:req b:req c:req d:req e:req f:req g:req h:req i:req j:req
+.macro vector a:req b:req c:req d:req e:req f:req g:req h:req in:req out:req
+////////////////////////////////////////////////////////////////////////////////
+// Get a byte from the input
+ldrb r10,[\in,#\a]
+// Initial lookups in r0,r1
+ldr r0,[r2,r10,lsl #2]
+ldr r1,[r6,r10,lsl #2]
+
+// Get the input byte
+ldrb r10,[\in,#\b]
+// (Magic) table lookup
+ldr r11,[r3,r10,lsl #2]
+ldr r12,[r7,r10,lsl #2]
+// Adding to total
+eor r0,r0,r11
+eor r1,r1,r12
+
+// Repeat a couple of times
+ldrb r10,[\in,#\c]
+ldr r11,[r4,r10,lsl #2]
+ldr r12,[r8,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\d]
+ldr r11,[r5,r10,lsl #2]
+ldr r12,[r9,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\e]
+ldr r11,[r6,r10,lsl #2]
+ldr r12,[r2,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\f]
+ldr r11,[r7,r10,lsl #2]
+ldr r12,[r3,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\g]
+ldr r11,[r8,r10,lsl #2]
+ldr r12,[r4,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\h]
+ldr r11,[r9,r10,lsl #2]
+ldr r12,[r5,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+// Store
+str r0,[\out],#4
+str r1,[\out],#4
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
+.macro firstvector a:req b:req c:req d:req e:req f:req g:req h:req i:req j:req in:req out:req
 ////////////////////////////////////////////////////////////////////////////////
 // Get the bytes from the input
-ldrb r9,[r14,#\a]
-ldrb r10,[r14,#\b]
-ldrb r11,[r14,#\c]
-ldrb r12,[r14,#\d]
-// Lookups
-ldr r0,[r1,r9,lsl #2]
-ldr r9,[r2,r10,lsl #2]
-ldr r10,[r3,r11,lsl #2]
-ldr r11,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
+ldrb r10,[\in,#\a]
+// Initial lookups in r0,r1
+ldr r0,[r2,r10,lsl #2]
+ldr r1,[r6,r10,lsl #2]
+
+// Get the input byte
+ldrb r10,[\in,#\b]
+// (Magic) table lookup
+ldr r11,[r3,r10,lsl #2]
+ldr r12,[r7,r10,lsl #2]
+// Adding to total
 eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r14,#\e]
-ldrb r10,[r14,#\f]
-ldrb r11,[r14,#\g]
-ldrb r12,[r14,#\h]
-// Lookups
-ldr r9,[r5,r9,lsl #2]
-ldr r10,[r6,r10,lsl #2]
-ldr r11,[r7,r11,lsl #2]
-ldr r12,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
+eor r1,r1,r12
+
+// Repeat a couple of times
+ldrb r10,[\in,#\c]
+ldr r11,[r4,r10,lsl #2]
+ldr r12,[r8,r10,lsl #2]
 eor r0,r0,r11
-eor r0,r0,r12
+eor r1,r1,r12
+
+ldrb r10,[\in,#\d]
+ldr r11,[r5,r10,lsl #2]
+ldr r12,[r9,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\e]
+ldr r11,[r6,r10,lsl #2]
+ldr r12,[r2,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\f]
+ldr r11,[r7,r10,lsl #2]
+ldr r12,[r3,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\g]
+ldr r11,[r8,r10,lsl #2]
+ldr r12,[r4,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldrb r10,[\in,#\h]
+ldr r11,[r9,r10,lsl #2]
+ldr r12,[r5,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
 // Round constant, sbox should be 256 before table0.
-add r9,r1,#-256
+add r10,r2,#-256
 // i = 4*round*2
-ldr r9,[r9,#\i]
-eor r0,r0,r9
+ldr r11,[r10,#\i]
+ldr r12,[r10,#\j]
+eor r0,r0,r11
+eor r1,r1,r12
 // Store
-str r0,[r13],#4
-// Get the bytes from the input
-ldrb r9,[r14,#\a]
-ldrb r10,[r14,#\b]
-ldrb r11,[r14,#\c]
-ldrb r12,[r14,#\d]
-// Lookups
-ldr r0,[r5,r9,lsl #2]
-ldr r9,[r6,r10,lsl #2]
-ldr r10,[r7,r11,lsl #2]
-ldr r11,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r14,#\e]
-ldrb r10,[r14,#\f]
-ldrb r11,[r14,#\g]
-ldrb r12,[r14,#\h]
-// Lookups
-ldr r9,[r1,r9,lsl #2]
-ldr r10,[r2,r10,lsl #2]
-ldr r11,[r3,r11,lsl #2]
-ldr r12,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Round constant, sbox should be 256 before table0.
-add r9,r1,#-256
-// j = 4*round*2 + 4
-ldr r9,[r9,#\j]
-eor r0,r0,r9
-// Store
-str r0,[r13],#4
-////////////////////////////////////////////////////////////////////////////////
-.endm
-
-.macro vector2 a:req b:req c:req d:req e:req f:req g:req h:req
-////////////////////////////////////////////////////////////////////////////////
-// Get the bytes from the input
-ldrb r9,[r14,#\a]
-ldrb r10,[r14,#\b]
-ldrb r11,[r14,#\c]
-ldrb r12,[r14,#\d]
-// Lookups
-ldr r0,[r1,r9,lsl #2]
-ldr r9,[r2,r10,lsl #2]
-ldr r10,[r3,r11,lsl #2]
-ldr r11,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r14,#\e]
-ldrb r10,[r14,#\f]
-ldrb r11,[r14,#\g]
-ldrb r12,[r14,#\h]
-// Lookups
-ldr r9,[r5,r9,lsl #2]
-ldr r10,[r6,r10,lsl #2]
-ldr r11,[r7,r11,lsl #2]
-ldr r12,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Store
-str r0,[r13],#4
-// Get the bytes from the input
-ldrb r9,[r14,#\a]
-ldrb r10,[r14,#\b]
-ldrb r11,[r14,#\c]
-ldrb r12,[r14,#\d]
-// Lookups
-ldr r0,[r5,r9,lsl #2]
-ldr r9,[r6,r10,lsl #2]
-ldr r10,[r7,r11,lsl #2]
-ldr r11,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r14,#\e]
-ldrb r10,[r14,#\f]
-ldrb r11,[r14,#\g]
-ldrb r12,[r14,#\h]
-// Lookups
-ldr r9,[r1,r9,lsl #2]
-ldr r10,[r2,r10,lsl #2]
-ldr r11,[r3,r11,lsl #2]
-ldr r12,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Store
-str r0,[r13],#4
-////////////////////////////////////////////////////////////////////////////////
-.endm
-
-.macro firstvector a:req b:req c:req d:req e:req f:req g:req h:req i:req j:req
-////////////////////////////////////////////////////////////////////////////////
-// Get the bytes from the input
-ldrb r9,[r13,#\a]
-ldrb r10,[r13,#\b]
-ldrb r11,[r13,#\c]
-ldrb r12,[r13,#\d]
-// Lookups
-ldr r0,[r1,r9,lsl #2]
-ldr r9,[r2,r10,lsl #2]
-ldr r10,[r3,r11,lsl #2]
-ldr r11,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r13,#\e]
-ldrb r10,[r13,#\f]
-ldrb r11,[r13,#\g]
-ldrb r12,[r13,#\h]
-// Lookups
-ldr r9,[r5,r9,lsl #2]
-ldr r10,[r6,r10,lsl #2]
-ldr r11,[r7,r11,lsl #2]
-ldr r12,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Round constant, sbox should be 256 before table0.
-add r9,r1,#-256
-// i = 4*round*2
-ldr r9,[r9,#\i]
-eor r0,r0,r9
-// Store
-str r0,[r14],#4
-// Get the bytes from the input
-ldrb r9,[r13,#\a]
-ldrb r10,[r13,#\b]
-ldrb r11,[r13,#\c]
-ldrb r12,[r13,#\d]
-// Lookups
-ldr r0,[r5,r9,lsl #2]
-ldr r9,[r6,r10,lsl #2]
-ldr r10,[r7,r11,lsl #2]
-ldr r11,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r13,#\e]
-ldrb r10,[r13,#\f]
-ldrb r11,[r13,#\g]
-ldrb r12,[r13,#\h]
-// Lookups
-ldr r9,[r1,r9,lsl #2]
-ldr r10,[r2,r10,lsl #2]
-ldr r11,[r3,r11,lsl #2]
-ldr r12,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Round constant, sbox should be 256 before table0.
-add r9,r1,#-256
-// j = 4*round*2 + 4
-ldr r9,[r9,#\j]
-eor r0,r0,r9
-// Store
-str r0,[r14],#4
-////////////////////////////////////////////////////////////////////////////////
-.endm
-
-.macro vector a:req b:req c:req d:req e:req f:req g:req h:req
-////////////////////////////////////////////////////////////////////////////////
-// Get the bytes from the input
-ldrb r9,[r13,#\a]
-ldrb r10,[r13,#\b]
-ldrb r11,[r13,#\c]
-ldrb r12,[r13,#\d]
-// Lookups
-ldr r0,[r1,r9,lsl #2]
-ldr r9,[r2,r10,lsl #2]
-ldr r10,[r3,r11,lsl #2]
-ldr r11,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r13,#\e]
-ldrb r10,[r13,#\f]
-ldrb r11,[r13,#\g]
-ldrb r12,[r13,#\h]
-// Lookups
-ldr r9,[r5,r9,lsl #2]
-ldr r10,[r6,r10,lsl #2]
-ldr r11,[r7,r11,lsl #2]
-ldr r12,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Store
-str r0,[r14],#4
-// Get the bytes from the input
-ldrb r9,[r13,#\a]
-ldrb r10,[r13,#\b]
-ldrb r11,[r13,#\c]
-ldrb r12,[r13,#\d]
-// Lookups
-ldr r0,[r5,r9,lsl #2]
-ldr r9,[r6,r10,lsl #2]
-ldr r10,[r7,r11,lsl #2]
-ldr r11,[r8,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-// Get input bytes
-ldrb r9,[r13,#\e]
-ldrb r10,[r13,#\f]
-ldrb r11,[r13,#\g]
-ldrb r12,[r13,#\h]
-// Lookups
-ldr r9,[r1,r9,lsl #2]
-ldr r10,[r2,r10,lsl #2]
-ldr r11,[r3,r11,lsl #2]
-ldr r12,[r4,r12,lsl #2]
-// Add them
-eor r0,r0,r9
-eor r0,r0,r10
-eor r0,r0,r11
-eor r0,r0,r12
-// Store
-str r0,[r14],#4
+str r0,[\out],#4
+str r1,[\out],#4
 ////////////////////////////////////////////////////////////////////////////////
 .endm
 
@@ -613,22 +451,18 @@ step: .skip 64
 	.globl _start
 
 _start:
-ldr r1,=table0
-ldr r2,=table1
-ldr r3,=table2
-ldr r4,=table3
-ldr r5,=table4
-ldr r6,=table5
-ldr r7,=table6
-ldr r8,=table7
+ldr r2,=table0
+ldr r3,=table1
+ldr r4,=table2
+ldr r5,=table3
+ldr r6,=table4
+ldr r7,=table5
+ldr r8,=table6
+ldr r9,=table7
 ldr r13,=testvector
 ldr r14,=step
 
 .ltorg
-// I dont even know (well I do, .ltorg seems to use r1, this corrects r1 to be at table0 again)
-add r1,r2,-1024
-
-//
 tworounds 0 4 8 12
 tworounds 16 20 24 28
 tworounds 32 36 40 44
