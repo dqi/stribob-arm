@@ -1,5 +1,7 @@
-// We use eight 1024byte tables to compute the pi permutation optimized for
-// speed.
+// We use eight 1024 byte tables to compute pi; optimized for speed.
+// IN: r13
+// OUT r13
+// All registers used.
 
 .macro tworounds roundkey1:req roundkey2:req roundkey3:req roundkey4:req
 ////////////////////////////////////////////////////////////////////////////////
@@ -140,6 +142,7 @@ eor r0,r0,r11
 eor r1,r1,r12
 
 // Round constant, sbox should be 256 before table0.
+// ldr r10,=sbox
 add r10,r2,#-256
 // i = 4*round*2
 ldr r11,[r10,#\i]
