@@ -606,7 +606,7 @@ testvector:
 .word 0x72911459, 0x5F086E76
 .word 0x0718AFE3, 0x65BC09DE
 .word 0xB6AFA180, 0xBCEC2A98
-step: .skip 64s
+step: .skip 64
 
 .text
 	.syntax unified
