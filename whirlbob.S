@@ -38,8 +38,8 @@ ldr r0,[r2,r10,lsl #2]
 ldr r1,[r6,r10,lsl #2]
 
 // (Magic) table lookup
-ldr r11,[r3,r11,lsl #2]
 ldr r12,[r7,r11,lsl #2]
+ldr r11,[r3,r11,lsl #2]
 // Already get this byte so we do not block later
 ldrb r10,[\in,#\c]
 // Adding to total
@@ -99,8 +99,8 @@ ldr r1,[r6,r10,lsl #2]
 
 // Get the input byte
 // (Magic) table lookup
-ldr r11,[r3,r11,lsl #2]
 ldr r12,[r7,r11,lsl #2]
+ldr r11,[r3,r11,lsl #2]
 ldrb r10,[\in,#\c]
 // Adding to total
 eor r0,r0,r11
