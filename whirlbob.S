@@ -1,6 +1,6 @@
 // We use eight 1024 byte tables to compute pi; optimized for speed.
 // IN: r13
-// OUT r13
+// OUT: r13
 // All registers used.
 
 .macro tworounds roundkey1:req roundkey2:req roundkey3:req roundkey4:req
@@ -456,15 +456,16 @@ step: .skip 64
 
 _start:
 ldr r2,=table0
-ldr r3,=table1
-ldr r4,=table2
-ldr r5,=table3
-ldr r6,=table4
-ldr r7,=table5
-ldr r8,=table6
-ldr r9,=table7
 ldr r13,=testvector
-ldr r14,=step
+add r3,r2,#1024
+add r4,r3,#1024
+add r5,r4,#1024
+add r6,r5,#1024
+add r7,r6,#1024
+add r8,r7,#1024
+add r9,r8,#1024
+add r14,r9,#1090
+
 .pool
 
 tworounds 0 4 8 12
