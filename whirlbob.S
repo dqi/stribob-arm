@@ -1,7 +1,7 @@
 // We use eight 1024 byte tables to compute pi; optimized for speed.
 // IN: r13
-// OUT: r13
-// All registers used.
+// OUT: r1
+// Registers changed: r0, r1.
 
 .macro tworounds roundkey1:req roundkey2:req roundkey3:req roundkey4:req
 ////////////////////////////////////////////////////////////////////////////////
@@ -439,6 +439,17 @@ table7:
 .word 0x31c43195,0x74cd7487,0xf6fff6e3,0x4605460a,0xac8aac09,0x891e893c,0x145014a0,0xe1a3e15b
 .word 0x165816b0,0x3ae83acd,0x69b9696f,0x09240948,0x70dd70a7,0xb6e2b6d9,0xd067d0ce,0xed93ed3b
 .word 0xcc17cc2e,0x4215422a,0x985a98b4,0xa4aaa449,0x28a0285d,0x5c6d5cda,0xf8c7f893,0x86228644
+/*
+testvector:
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+.word 0xffffffff, 0xffffffff
+*/
 testvector:
 .word 0x7738E1B5, 0x41A036EA
 .word 0x458D50F8, 0x0FA01C44
@@ -449,14 +460,23 @@ testvector:
 .word 0x0718AFE3, 0x65BC09DE
 .word 0xB6AFA180, 0xBCEC2A98
 step: .skip 64
+mem:
+.word 0
+.word 0
+.word 0
 
 .text
 	.syntax unified
 	.globl _start
 
 _start:
-ldr r2,=table0
+// Control data
+push {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
+ldr r0,=mem
+str r13,[r0,#4]
+
 ldr r13,=testvector
+ldr r2,=table0
 add r3,r2,#1024
 add r4,r3,#1024
 add r5,r4,#1024
@@ -474,5 +494,10 @@ tworounds 32 36 40 44
 tworounds 48 52 56 60
 tworounds 64 68 72 76
 tworounds 80 84 88 92
-// EZPZ, output in r13
+// output in r13
+mov r1,r13
+ldr r0,=mem
+ldr r13,[r0,#4]
+pop {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
+bx lr
 nop
