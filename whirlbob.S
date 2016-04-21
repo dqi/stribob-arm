@@ -544,185 +544,229 @@ mem:
 .word 0
 .text
 	.syntax unified
-	.globl func
+	.globl _start
 
-func:
+_start:
 push {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 ldr r0,=mem
 str r13,[r0]
-
-// First put
-ldr r8,=keyvector
-ldr r3,=statevector
-.pool
-
-mov r6,0x00
-start_loop:
-
-ldr r0,[r8],#4
-ldr r1,[r3]
-eor r1,r1,r0
-str r1,[r3],#4
-
-
-add r6,r6,#1
-cmp r6,#6
-blt start_loop
-
-// First put, last bit
-mov r1, 0x01000000
-ldr r4,[r3]
-eor r1,r1,r4
-str r1,[r3],#8
-
-mov r1,0x12000000
-ldr r4,[r3]
-eor r1,r1,r4
-str r1,[r3]
-
-// In r13
 ldr r13,=statevector
+ldr r14,=keyvector
+
+// Keyvector XOR'ing, maybe unnessecary...
+// 0x01 Goes at position 25, 0x12 goes at position 32
+// Load key
+ldr r0,[r14],#4
+ldr r1,[r14],#4
+ldr r2,[r14],#4
+ldr r3,[r14],#4
+ldr r4,[r14],#4
+ldr r5,[r14],#4
+// Load state
+ldr r6,[r13],#4
+ldr r7,[r13],#4
+ldr r8,[r13],#4
+ldr r9,[r13],#4
+ldr r10,[r13],#4
+ldr r11,[r13],#4
+// Xor key and state
+eor r0,r0,r6
+eor r1,r1,r7
+eor r2,r2,r8
+eor r3,r3,r9
+eor r4,r4,r10
+eor r5,r5,r11
+// Store result
+str r0,[r13,#-24]!
+str r1,[r13]!
+str r2,[r13]!
+str r3,[r13]!
+str r4,[r13]!
+str r5,[r13]!
+// Padding
+mov r0,0x01000000
+mov r1,0x12000000
+str r0,[r13],#8
+str r1,[r13],#-32
+// In r13
 pi
 // Out r1
-// Second Put with the temp1
-
-add r8,r1,#128
-mov r3,r1
-
-mov r6,0x00
-start_loopput2:
-
-ldr r0,[r8],#4
-ldr r1,[r3]
-eor r1,r1,r0
-str r1,[r3],#4
-
-
-add r6,r6,#1
-cmp r6,#4
-blt start_loopput2
-
-// second put last bit
-nop
-
-mov r1, 0x01000000
-ldr r10,[r3]
-eor r1,r1,r10
-str r1,[r3],#16
-
+// Can't add to r13 compiler complains :(
+add r14,r1,#128
+// Nonce XOR'ing, 16 bytes
+// Load Nonce
+ldr r0,[r14],#4
+ldr r1,[r14],#4
+ldr r2,[r14],#4
+ldr r3,[r14],#4
+// Load state
+ldr r6,[r13],#4
+ldr r7,[r13],#4
+ldr r8,[r13],#4
+ldr r9,[r13],#4
+// Xor Nonce and state
+eor r0,r0,r6
+eor r1,r1,r7
+eor r2,r2,r8
+eor r3,r3,r9
+// Store result
+str r0,[r13,#-16]!
+str r1,[r13]!
+str r2,[r13]!
+str r3,[r13]!
+// Padding
+mov r0,0x01000000
 mov r1,0x22000000
-ldr r10,[r3]
-eor r1,r1,r10
-str r1,[r3]
+// Load and xor with padding
+str r0,[r13],#16
+str r1,[r13],#-32
 pi
-
-// third put
-
-add r8,r1,#192
-mov r3,r1
-
-mov r6,0x00
-start_loopput3:
-
-ldr r0,[r8],#4
-ldr r1,[r3]
-eor r1,r1,r0
-str r1,[r3],#4
-
-
-add r6,r6,#1
-cmp r6,#8
-blt start_loopput3
-
-// third put last bit
-mov r1, 0x01000000
-ldr r4,[r3]
-eor r1,r1,r4
-str r1,[r3]
-
-mov r1,0x42000000
-ldr r4,[r3]
-eor r1,r1,r4
-str r1,[r3]
+// Authenticated data XOR'ing, 32 bytes
+// Load AAD 24 bytes
+add r14,r1,#192
+ldr r0,[r14],#4
+ldr r1,[r14],#4
+ldr r2,[r14],#4
+ldr r3,[r14],#4
+ldr r4,[r14],#4
+ldr r5,[r14],#4
+// Load state
+ldr r6,[r13],#4
+ldr r7,[r13],#4
+ldr r8,[r13],#4
+ldr r9,[r13],#4
+ldr r10,[r13],#4
+ldr r11,[r13],#4
+// Xor AAD and state
+eor r0,r0,r6
+eor r1,r1,r7
+eor r2,r2,r8
+eor r3,r3,r9
+eor r4,r4,r10
+eor r5,r5,r11
+// Store result
+str r0,[r13,#-24]!
+str r1,[r13]!
+str r2,[r13]!
+str r3,[r13]!
+str r4,[r13]!
+str r5,[r13]!
+// 8 More bytes of AAD
+ldr r0,[r14],#4
+ldr r1,[r14],#4
+// 8 More bytes of state and one of padding
+ldr r2,[r13],#4
+ldr r3,[r13],#4
+ldr r4,[r13],#4
+// Xor AAD and state
+eor r0,r0,r2
+eor r1,r1,r3
+str r0,[r13,#-12]!
+str r1,[r13]!
+// Padding
+mov r1,0x43000000
+eor r0,r1,r4
+str r0,[r13],#-32
 pi
-
 // Start encryption
-add r8,r1,#256
-mov r3,r1
-add r9,r1,#384
-//ldr r10,[r9]
+add r12,r1,#384
+add r14,r1,#256
+// For the final output
+// 9 Bytes of state
+ldr r0,[r13]!
+ldr r1,[r13]!
+ldr r2,[r13]!
+ldr r3,[r13]!
+ldr r4,[r13]!
+ldr r5,[r13]!
+ldr r6,[r13]!
+ldr r7,[r13]!
+ldr r8,[r13],#-32
+// First three chunks of plaintext
+ldr r9,[r14]!
+ldr r10,[r14]!
+ldr r11,[r14]!
 
-mov r6,0x00
-start_loopput4:
+eor r0,r0,r9
+eor r1,r1,r10
+eor r2,r2,r11
 
-ldr r0,[r8],#4
-ldr r1,[r3]
-eor r1,r1,r0
-str r1,[r9],#4
-str r1,[r3],#4
+str r0,[r12]!
+str r0,[r13]!
+str r1,[r12]!
+str r1,[r13]!
+str r2,[r12]!
+str r2,[r13]!
 
-add r6,r6,#1
-cmp r6,#8
-blt start_loopput4
+// Next five chunks of plaintext
 
-mov r1,0x50000000
-ldr r4,[r3]
+ldr r0,[r14]!
+ldr r1,[r14]!
+ldr r2,[r14]!
+ldr r9,[r14]!
+ldr r10,[r14]!
+mov r11,0x50000000
+
+eor r0,r0,r3
 eor r1,r1,r4
-str r1,[r3]
+eor r2,r2,r5
+eor r9,r9,r6
+eor r10,r10,r7
+eor r11,r11,r8
 
+str r0,[r12]!
+str r0,[r13]!
+str r1,[r12]!
+str r1,[r13]!
+str r2,[r12]!
+str r2,[r13]!
+
+str r9,[r12]!
+str r9,[r13]!
+str r10,[r12]!
+str r10,[r13]!
+str r11,[r13],#-32
 pi
-
 // encrypt second part of plain text
-add r8,r1,#320
-mov r3,r1
-add r9,r1,#416
-//ldr r9,=ciphervector
-//ldr r10,[r9]
+// Output pointer
+add r12,r1,#416
+// Second PT block pointer
+add r14,r1,#320
 
-//mov r6,0x00
-//start_loopput5:
+ldr r0,[r13]
+ldr r1,[r13,#4]
 
-ldr r0,[r8],#4
-ldr r1,[r3]
+ldr r2,[r14]!
+ldr r3,[r14]!
+
+eor r0,r0,r2
+eor r1,r1,r3
+
+str r0,[r12]!
+str r0,[r13]
+str r1,[r12]!
+
+mov r0,0x1000
 eor r1,r1,r0
-str r1,[r9],#4
-str r1,[r3],#4
+str r1,[r13,#4]!
 
-ldr r0,[r8],#4
-ldr r1,[r3]
-eor r1,r1,r0
-str r1,[r9],#2
-str r1,[r3],#-2
-
-//add r6,r6,#1
-//cmp r6,#2
-//blt start_loopput5
-
-
-// encrypt last 6 bit
-nop
-mov r1,0x01000000
-ldr r4,[r3]
-eor r1,r1,r4
-str r1,[r3],#30  // depends on size of plain text
-
-mov r1,0x52000000
-ldr r4,[r3]
-eor r1,r1,r4
-str r1,[r3]
-
+mov r0,0x52000000
+ldr r1,[r13,#32]
+eor r0,r0,r1
+str r1,[r13,#32]
 pi
+add r12,r1,#424
+ldr r2,[r1],#4
+ldr r3,[r1],#4
+ldr r4,[r1],#4
+ldr r5,[r1],#4
+str r2,[r12],#4
+str r3,[r12],#4
+str r4,[r12],#4
+str r5,[r12],#4
+// T-t-t-that's all folk!
 nop
-add r9,r1,#424
-ldr r2,[r1],#4
-str r2,[r9],#4
-ldr r2,[r1],#4
-str r2,[r9],#4
-ldr r2,[r1],#4
-str r2,[r9],#4
-ldr r2,[r1],#4
-str r2,[r9],#4
-nop
+BKPT
 ldr r0,=mem
 ldr r13,[r0]
 pop {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
