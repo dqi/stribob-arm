@@ -3,6 +3,32 @@
 // OUT: r1
 // Registers changed: r0, r1.
 
+.macro pi
+////////////////////////////////////////////////////////////////////////////////
+// Control data
+
+ldr r2,=table0
+add r3,r2,#1024
+add r4,r3,#1024
+add r5,r4,#1024
+add r6,r5,#1024
+add r7,r6,#1024
+add r8,r7,#1024
+add r9,r8,#1024
+add r14,r9,#1088
+.pool
+
+tworounds 0 4 8 12
+tworounds 16 20 24 28
+tworounds 32 36 40 44
+tworounds 48 52 56 60
+tworounds 64 68 72 76
+tworounds 80 84 88 92
+// output in r13
+mov r1,r13
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
 .macro tworounds roundkey1:req roundkey2:req roundkey3:req roundkey4:req
 ////////////////////////////////////////////////////////////////////////////////
 // Offsets corrected for big endian...
@@ -439,17 +465,71 @@ table7:
 .word 0x31c43195,0x74cd7487,0xf6fff6e3,0x4605460a,0xac8aac09,0x891e893c,0x145014a0,0xe1a3e15b
 .word 0x165816b0,0x3ae83acd,0x69b9696f,0x09240948,0x70dd70a7,0xb6e2b6d9,0xd067d0ce,0xed93ed3b
 .word 0xcc17cc2e,0x4215422a,0x985a98b4,0xa4aaa449,0x28a0285d,0x5c6d5cda,0xf8c7f893,0x86228644
+statevector:
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+keyvector:
+.word 0x3139322d, 0x62697420
+.word 0x53656372, 0x6574204b
+.word 0x65792076, 0x616c7565
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+noncevector:
+.word 0x4e6f6e63, 0x65732055
+.word 0x73656420, 0x4f6e6365
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+authenticatedvector:
+.word 0x41414420, 0x54657374
+.word 0x20566563, 0x746f7220
+.word 0x45786163, 0x7420426c
+.word 0x6f636b20, 0x33322042
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+plaintext1:
+.word 0x3220426c, 0x6f636b20
+.word 0x54657374, 0x20566563
+.word 0x746f7220, 0x666f7220
+.word 0x73747269, 0x626f6231
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+
+plaintext2:
+.word 0x39327232, 0x64320000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+ciphervector:
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
+.word 0x00000000, 0x00000000
 /*
-testvector:
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-.word 0xffffffff, 0xffffffff
-*/
 testvector:
 .word 0x7738E1B5, 0x41A036EA
 .word 0x458D50F8, 0x0FA01C44
@@ -459,45 +539,191 @@ testvector:
 .word 0x72911459, 0x5F086E76
 .word 0x0718AFE3, 0x65BC09DE
 .word 0xB6AFA180, 0xBCEC2A98
-step: .skip 64
+*/
 mem:
 .word 0
-.word 0
-.word 0
-
 .text
 	.syntax unified
-	.globl _start
+	.globl func
 
-_start:
-// Control data
+func:
 push {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 ldr r0,=mem
-str r13,[r0,#4]
+str r13,[r0]
 
-ldr r13,=testvector
-ldr r2,=table0
-add r3,r2,#1024
-add r4,r3,#1024
-add r5,r4,#1024
-add r6,r5,#1024
-add r7,r6,#1024
-add r8,r7,#1024
-add r9,r8,#1024
-add r14,r9,#1090
-
+// First put
+ldr r8,=keyvector
+ldr r3,=statevector
 .pool
 
-tworounds 0 4 8 12
-tworounds 16 20 24 28
-tworounds 32 36 40 44
-tworounds 48 52 56 60
-tworounds 64 68 72 76
-tworounds 80 84 88 92
-// output in r13
-mov r1,r13
+mov r6,0x00
+start_loop:
+
+ldr r0,[r8],#4
+ldr r1,[r3]
+eor r1,r1,r0
+str r1,[r3],#4
+
+
+add r6,r6,#1
+cmp r6,#6
+blt start_loop
+
+// First put, last bit
+mov r1, 0x01000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3],#8
+
+mov r1,0x12000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3]
+
+// In r13
+ldr r13,=statevector
+pi
+// Out r1
+// Second Put with the temp1
+
+add r8,r1,#128
+mov r3,r1
+
+mov r6,0x00
+start_loopput2:
+
+ldr r0,[r8],#4
+ldr r1,[r3]
+eor r1,r1,r0
+str r1,[r3],#4
+
+
+add r6,r6,#1
+cmp r6,#4
+blt start_loopput2
+
+// second put last bit
+nop
+
+mov r1, 0x01000000
+ldr r10,[r3]
+eor r1,r1,r10
+str r1,[r3],#16
+
+mov r1,0x22000000
+ldr r10,[r3]
+eor r1,r1,r10
+str r1,[r3]
+pi
+
+// third put
+
+add r8,r1,#192
+mov r3,r1
+
+mov r6,0x00
+start_loopput3:
+
+ldr r0,[r8],#4
+ldr r1,[r3]
+eor r1,r1,r0
+str r1,[r3],#4
+
+
+add r6,r6,#1
+cmp r6,#8
+blt start_loopput3
+
+// third put last bit
+mov r1, 0x01000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3]
+
+mov r1,0x42000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3]
+pi
+
+// Start encryption
+add r8,r1,#256
+mov r3,r1
+add r9,r1,#384
+//ldr r10,[r9]
+
+mov r6,0x00
+start_loopput4:
+
+ldr r0,[r8],#4
+ldr r1,[r3]
+eor r1,r1,r0
+str r1,[r9],#4
+str r1,[r3],#4
+
+add r6,r6,#1
+cmp r6,#8
+blt start_loopput4
+
+mov r1,0x50000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3]
+
+pi
+
+// encrypt second part of plain text
+add r8,r1,#320
+mov r3,r1
+add r9,r1,#416
+//ldr r9,=ciphervector
+//ldr r10,[r9]
+
+//mov r6,0x00
+//start_loopput5:
+
+ldr r0,[r8],#4
+ldr r1,[r3]
+eor r1,r1,r0
+str r1,[r9],#4
+str r1,[r3],#4
+
+ldr r0,[r8],#4
+ldr r1,[r3]
+eor r1,r1,r0
+str r1,[r9],#2
+str r1,[r3],#-2
+
+//add r6,r6,#1
+//cmp r6,#2
+//blt start_loopput5
+
+
+// encrypt last 6 bit
+nop
+mov r1,0x01000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3],#30  // depends on size of plain text
+
+mov r1,0x52000000
+ldr r4,[r3]
+eor r1,r1,r4
+str r1,[r3]
+
+pi
+nop
+add r9,r1,#424
+ldr r2,[r1],#4
+str r2,[r9],#4
+ldr r2,[r1],#4
+str r2,[r9],#4
+ldr r2,[r1],#4
+str r2,[r9],#4
+ldr r2,[r1],#4
+str r2,[r9],#4
+nop
 ldr r0,=mem
-ldr r13,[r0,#4]
+ldr r13,[r0]
 pop {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 bx lr
-nop
