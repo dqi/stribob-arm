@@ -759,17 +759,30 @@ ldr r1,[r13,#32]
 eor r0,r0,r1
 str r0,[r13,#32]
 pi
-add r12,r1,#422
-ldr r2,[r1],#4
-ldr r3,[r1],#4
-ldr r4,[r1],#4
-ldr r5,[r1],#4
-str r2,[r12],#4
-str r3,[r12],#4
-str r4,[r12],#4
-str r5,[r12],#4
+add r12,r1,#420
+// Store MAC
+ldrh r2,[r1,#2] // aeae
+ldrh r3,[r1],#4 // 710f
+ldrh r4,[r1],#2 // 3e56
+ldrh r5,[r1],#2 // 0ded
+ldrh r6,[r1],#2 // 26fe
+ldrh r7,[r1],#2 // 5bd0
+ldrh r8,[r1],#2 // 4a4f
+ldrh r9,[r1],#2 // 20f6
+
+strh r2,[r12]
+str r5,[r12,#4]
+str r3,[r12,#6]
+str r7,[r12,#8]
+str r4,[r12,#10]
+str r9,[r12,#12]
+str r6,[r12,#14]
+str r8,[r12,#18]
+
+
 // T-t-t-that's all folks!
 ldr r0,=mem
 ldr r13,[r0]
+add r1,r12,#-0x24
 pop {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 bx lr
