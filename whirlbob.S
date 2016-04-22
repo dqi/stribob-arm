@@ -736,8 +736,8 @@ add r12,r1,#416
 // Second PT block pointer
 add r14,r1,#320
 
-ldr r0,[r13]
-ldr r1,[r13,#4]
+ldr r0,[r13],#4
+ldr r1,[r13],#-4
 
 ldr r2,[r14],#4
 ldr r3,[r14],#4
@@ -746,17 +746,18 @@ eor r0,r0,r2
 eor r1,r1,r3
 
 str r0,[r12],#4
-str r0,[r13]
 str r1,[r12],#4
 
-mov r0,0x1000
-eor r1,r1,r0
-str r1,[r13,#4]!
+str r0,[r13],#4
+
+mov r2,0x1000
+eor r1,r1,r2
+str r1,[r13],#-4
 
 mov r0,0x52000000
 ldr r1,[r13,#32]
 eor r0,r0,r1
-str r1,[r13,#32]
+str r0,[r13,#32]
 pi
 add r12,r1,#424
 ldr r2,[r1],#4
