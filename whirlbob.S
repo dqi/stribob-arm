@@ -19,7 +19,7 @@ add r14,r9,#1088
 b 1f
 .pool
 
-1:t
+1:
 tworounds 0 4 8 12
 tworounds 16 20 24 28
 tworounds 32 36 40 44
@@ -546,9 +546,8 @@ mem:
 .word 0
 .text
 	.syntax unified
-	.globl _start
-
-_start:
+	.globl main
+main:
 push {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 ldr r0,=mem
 str r13,[r0]
@@ -666,11 +665,11 @@ ldr r4,[r13],#-8
 eor r0,r0,r2
 eor r1,r1,r3
 mov r1,0x43000000
-eor r0,r1,r4
+eor r2,r1,r4
 str r0,[r13],#4
 str r1,[r13],#4
 // Padding
-str r0,[r13],#-32
+str r2,[r13],#-32
 pi
 // Start encryption
 add r12,r1,#384
@@ -769,8 +768,6 @@ str r3,[r12],#4
 str r4,[r12],#4
 str r5,[r12],#4
 // T-t-t-that's all folks!
-nop
-BKPT
 ldr r0,=mem
 ldr r13,[r0]
 pop {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
