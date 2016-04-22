@@ -664,8 +664,8 @@ ldr r4,[r13],#-8
 // Xor AAD and state
 eor r0,r0,r2
 eor r1,r1,r3
-mov r1,0x43000000
-eor r2,r1,r4
+mov r2,0x43000000
+eor r2,r2,r4
 str r0,[r13],#4
 str r1,[r13],#4
 // Padding
