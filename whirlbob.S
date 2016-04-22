@@ -19,7 +19,7 @@ add r14,r9,#1088
 b 1f
 .pool
 
-1:
+1:t
 tworounds 0 4 8 12
 tworounds 16 20 24 28
 tworounds 32 36 40 44
@@ -570,7 +570,7 @@ ldr r7,[r13],#4
 ldr r8,[r13],#4
 ldr r9,[r13],#4
 ldr r10,[r13],#4
-ldr r11,[r13],#4
+ldr r11,[r13],#-20
 // Xor key and state
 eor r0,r0,r6
 eor r1,r1,r7
@@ -579,7 +579,7 @@ eor r3,r3,r9
 eor r4,r4,r10
 eor r5,r5,r11
 // Store result
-str r0,[r13,#-24]!
+str r0,[r13],#4
 str r1,[r13],#4
 str r2,[r13],#4
 str r3,[r13],#4
