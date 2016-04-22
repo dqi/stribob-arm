@@ -750,7 +750,7 @@ str r1,[r12],#4
 
 str r0,[r13],#4
 
-mov r2,0x1000
+mov r2,0x0100
 eor r1,r1,r2
 str r1,[r13],#-4
 
