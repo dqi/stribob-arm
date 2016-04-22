@@ -759,7 +759,7 @@ ldr r1,[r13,#32]
 eor r0,r0,r1
 str r0,[r13,#32]
 pi
-add r12,r1,#424
+add r12,r1,#422
 ldr r2,[r1],#4
 ldr r3,[r1],#4
 ldr r4,[r1],#4
