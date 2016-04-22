@@ -16,8 +16,10 @@ add r7,r6,#1024
 add r8,r7,#1024
 add r9,r8,#1024
 add r14,r9,#1088
+b 1f
 .pool
 
+1:
 tworounds 0 4 8 12
 tworounds 16 20 24 28
 tworounds 32 36 40 44
@@ -578,11 +580,11 @@ eor r4,r4,r10
 eor r5,r5,r11
 // Store result
 str r0,[r13,#-24]!
-str r1,[r13]!
-str r2,[r13]!
-str r3,[r13]!
-str r4,[r13]!
-str r5,[r13]!
+str r1,[r13],#4
+str r2,[r13],#4
+str r3,[r13],#4
+str r4,[r13],#4
+str r5,[r13],#4
 // Padding
 mov r0,0x01000000
 mov r1,0x12000000
@@ -604,22 +606,24 @@ ldr r6,[r13],#4
 ldr r7,[r13],#4
 ldr r8,[r13],#4
 ldr r9,[r13],#4
+ldr r10,[r13],#16
+ldr r11,[r13],#-32
 // Xor Nonce and state
 eor r0,r0,r6
 eor r1,r1,r7
 eor r2,r2,r8
 eor r3,r3,r9
+mov r4,0x01000000
+eor r4,r4,r10
+mov r5,0x22000000
+eor r5,r5,r11
 // Store result
-str r0,[r13,#-16]!
-str r1,[r13]!
-str r2,[r13]!
-str r3,[r13]!
-// Padding
-mov r0,0x01000000
-mov r1,0x22000000
-// Load and xor with padding
-str r0,[r13],#16
-str r1,[r13],#-32
+str r0,[r13],#4
+str r1,[r13],#4
+str r2,[r13],#4
+str r3,[r13],#4
+str r4,[r13],#16
+str r5,[r13],#-32
 pi
 // Authenticated data XOR'ing, 32 bytes
 // Load AAD 24 bytes
@@ -636,7 +640,7 @@ ldr r7,[r13],#4
 ldr r8,[r13],#4
 ldr r9,[r13],#4
 ldr r10,[r13],#4
-ldr r11,[r13],#4
+ldr r11,[r13],#-20
 // Xor AAD and state
 eor r0,r0,r6
 eor r1,r1,r7
@@ -645,27 +649,27 @@ eor r3,r3,r9
 eor r4,r4,r10
 eor r5,r5,r11
 // Store result
-str r0,[r13,#-24]!
-str r1,[r13]!
-str r2,[r13]!
-str r3,[r13]!
-str r4,[r13]!
-str r5,[r13]!
+str r0,[r13],#4
+str r1,[r13],#4
+str r2,[r13],#4
+str r3,[r13],#4
+str r4,[r13],#4
+str r5,[r13],#4
 // 8 More bytes of AAD
 ldr r0,[r14],#4
 ldr r1,[r14],#4
 // 8 More bytes of state and one of padding
 ldr r2,[r13],#4
 ldr r3,[r13],#4
-ldr r4,[r13],#4
+ldr r4,[r13],#-8
 // Xor AAD and state
 eor r0,r0,r2
 eor r1,r1,r3
-str r0,[r13,#-12]!
-str r1,[r13]!
-// Padding
 mov r1,0x43000000
 eor r0,r1,r4
+str r0,[r13],#4
+str r1,[r13],#4
+// Padding
 str r0,[r13],#-32
 pi
 // Start encryption
@@ -673,38 +677,38 @@ add r12,r1,#384
 add r14,r1,#256
 // For the final output
 // 9 Bytes of state
-ldr r0,[r13]!
-ldr r1,[r13]!
-ldr r2,[r13]!
-ldr r3,[r13]!
-ldr r4,[r13]!
-ldr r5,[r13]!
-ldr r6,[r13]!
-ldr r7,[r13]!
+ldr r0,[r13],#4
+ldr r1,[r13],#4
+ldr r2,[r13],#4
+ldr r3,[r13],#4
+ldr r4,[r13],#4
+ldr r5,[r13],#4
+ldr r6,[r13],#4
+ldr r7,[r13],#4
 ldr r8,[r13],#-32
 // First three chunks of plaintext
-ldr r9,[r14]!
-ldr r10,[r14]!
-ldr r11,[r14]!
+ldr r9,[r14],#4
+ldr r10,[r14],#4
+ldr r11,[r14],#4
 
 eor r0,r0,r9
 eor r1,r1,r10
 eor r2,r2,r11
 
-str r0,[r12]!
-str r0,[r13]!
-str r1,[r12]!
-str r1,[r13]!
-str r2,[r12]!
-str r2,[r13]!
+str r0,[r12],#4
+str r0,[r13],#4
+str r1,[r12],#4
+str r1,[r13],#4
+str r2,[r12],#4
+str r2,[r13],#4
 
 // Next five chunks of plaintext
 
-ldr r0,[r14]!
-ldr r1,[r14]!
-ldr r2,[r14]!
-ldr r9,[r14]!
-ldr r10,[r14]!
+ldr r0,[r14],#4
+ldr r1,[r14],#4
+ldr r2,[r14],#4
+ldr r9,[r14],#4
+ldr r10,[r14],#4
 mov r11,0x50000000
 
 eor r0,r0,r3
@@ -714,17 +718,17 @@ eor r9,r9,r6
 eor r10,r10,r7
 eor r11,r11,r8
 
-str r0,[r12]!
-str r0,[r13]!
-str r1,[r12]!
-str r1,[r13]!
-str r2,[r12]!
-str r2,[r13]!
+str r0,[r12],#4
+str r0,[r13],#4
+str r1,[r12],#4
+str r1,[r13],#4
+str r2,[r12],#4
+str r2,[r13],#4
 
-str r9,[r12]!
-str r9,[r13]!
-str r10,[r12]!
-str r10,[r13]!
+str r9,[r12],#4
+str r9,[r13],#4
+str r10,[r12],#4
+str r10,[r13],#4
 str r11,[r13],#-32
 pi
 // encrypt second part of plain text
@@ -736,15 +740,15 @@ add r14,r1,#320
 ldr r0,[r13]
 ldr r1,[r13,#4]
 
-ldr r2,[r14]!
-ldr r3,[r14]!
+ldr r2,[r14],#4
+ldr r3,[r14],#4
 
 eor r0,r0,r2
 eor r1,r1,r3
 
-str r0,[r12]!
+str r0,[r12],#4
 str r0,[r13]
-str r1,[r12]!
+str r1,[r12],#4
 
 mov r0,0x1000
 eor r1,r1,r0
@@ -764,7 +768,7 @@ str r2,[r12],#4
 str r3,[r12],#4
 str r4,[r12],#4
 str r5,[r12],#4
-// T-t-t-that's all folk!
+// T-t-t-that's all folks!
 nop
 BKPT
 ldr r0,=mem
