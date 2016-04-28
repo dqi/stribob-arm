@@ -34,24 +34,23 @@ mov r1,r13
 .macro tworounds roundkey1:req roundkey2:req roundkey3:req roundkey4:req
 ////////////////////////////////////////////////////////////////////////////////
 // Offsets corrected for big endian...
-firstvector 3 58 49 40 39 30 21 12 \roundkey1 \roundkey2 r13 r14
-vector     11  2 57 48 47 38 29 20 r13 r14
-vector     19 10  1 56 55 46 37 28 r13 r14
-vector	   27 18  9  0 63 54 45 36 r13 r14
-vector	   35 26 17  8  7 62 53 44 r13 r14
-vector	   43 34 25 16 15  6 61 52 r13 r14
-vector	   51 42 33 24 23 14  5 60 r13 r14
-vector	   59 50 41 32 31 22 13  4 r13 r14
-add r14,r14,#-64
-firstvector 3 58 49 40 39 30 21 12 \roundkey3 \roundkey4 r14 r13
-vector     11  2 57 48 47 38 29 20 r14 r13
-vector     19 10  1 56 55 46 37 28 r14 r13
-vector     27 18  9  0 63 54 45 36 r14 r13
-vector     35 26 17  8  7 62 53 44 r14 r13
-vector     43 34 25 16 15  6 61 52 r14 r13
-vector     51 42 33 24 23 14  5 60 r14 r13
-vector     59 50 41 32 31 22 13  4 r14 r13
-add r13,r13,#-64
+firstvector 	 3 58 49 40 39 30 21 12 \roundkey1 \roundkey2 r13 r14
+vector     		11  2 57 48 47 38 29 20 r13 r14
+vector     		19 10  1 56 55 46 37 28 r13 r14
+vector	   		27 18  9  0 63 54 45 36 r13 r14
+vector	   		35 26 17  8  7 62 53 44 r13 r14
+vector	   		43 34 25 16 15  6 61 52 r13 r14
+vector	   		51 42 33 24 23 14  5 60 r13 r14
+lastvector	   	59 50 41 32 31 22 13  4 r13 r14
+
+firstvector 	 3 58 49 40 39 30 21 12 \roundkey3 \roundkey4 r14 r13
+vector     		11  2 57 48 47 38 29 20 r14 r13
+vector     		19 10  1 56 55 46 37 28 r14 r13
+vector     		27 18  9  0 63 54 45 36 r14 r13
+vector     		35 26 17  8  7 62 53 44 r14 r13
+vector     		43 34 25 16 15  6 61 52 r14 r13
+vector     		51 42 33 24 23 14  5 60 r14 r13
+lastvector     	59 50 41 32 31 22 13  4 r14 r13
 ////////////////////////////////////////////////////////////////////////////////
 .endm
 
@@ -115,6 +114,68 @@ str r0,[\out],#4
 str r1,[\out],#4
 ////////////////////////////////////////////////////////////////////////////////
 .endm
+
+.macro lastvector a:req b:req c:req d:req e:req f:req g:req h:req in:req out:req
+////////////////////////////////////////////////////////////////////////////////
+// Get a byte from the input
+ldrb r10,[\in,#\a]
+// Get the input byte in a non-blocking way
+ldrb r11,[\in,#\b]
+// Initial lookups in r0,r1
+ldr r0,[r2,r10,lsl #2]
+ldr r1,[r6,r10,lsl #2]
+
+// (Magic) table lookup
+ldr r12,[r7,r11,lsl #2]
+ldr r11,[r3,r11,lsl #2]
+// Already get this byte so we do not block later
+ldrb r10,[\in,#\c]
+// Adding to total
+eor r0,r0,r11
+eor r1,r1,r12
+
+// Repeat a couple of times
+ldr r11,[r4,r10,lsl #2]
+ldr r12,[r8,r10,lsl #2]
+ldrb r10,[\in,#\d]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldr r11,[r5,r10,lsl #2]
+ldr r12,[r9,r10,lsl #2]
+ldrb r10,[\in,#\e]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldr r11,[r6,r10,lsl #2]
+ldr r12,[r2,r10,lsl #2]
+ldrb r10,[\in,#\f]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldr r11,[r7,r10,lsl #2]
+ldr r12,[r3,r10,lsl #2]
+ldrb r10,[\in,#\g]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldr r11,[r8,r10,lsl #2]
+ldr r12,[r4,r10,lsl #2]
+ldrb r10,[\in,#\h]
+eor r0,r0,r11
+eor r1,r1,r12
+
+ldr r11,[r9,r10,lsl #2]
+ldr r12,[r5,r10,lsl #2]
+eor r0,r0,r11
+eor r1,r1,r12
+
+// Store
+str r0,[\out],#4
+str r1,[\out],#-60
+////////////////////////////////////////////////////////////////////////////////
+.endm
+
 
 .macro firstvector a:req b:req c:req d:req e:req f:req g:req h:req i:req j:req in:req out:req
 ////////////////////////////////////////////////////////////////////////////////
@@ -546,15 +607,15 @@ mem:
 .word 0
 .text
 	.syntax unified
-	.globl main
-main:
+	.globl func
+func:
 push {r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 ldr r0,=mem
 str r13,[r0]
 ldr r13,=statevector
 ldr r14,=keyvector
 
-// Keyvector XOR'ing, maybe unnessecary...
+// Keyvector XOR'ing, this is pretty much unnessecary, we could just load the key in memory instead, oh well.
 // 0x01 Goes at position 25, 0x12 goes at position 32
 // Load key
 ldr r0,[r14],#4
@@ -778,7 +839,6 @@ str r4,[r12,#10]
 str r9,[r12,#12]
 str r6,[r12,#14]
 str r8,[r12,#18]
-
 
 // T-t-t-that's all folks!
 ldr r0,=mem
